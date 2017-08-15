@@ -182,6 +182,7 @@
   "dependencies": {
     "devtron": "^1.4.0",
     "electron-debug": "^1.2.0",
+    "events": "^1.1.1",
     "filesize": "^3.5.10",
     "font-awesome": "^4.7.0",
     "fs": "^0.0.1-security",
