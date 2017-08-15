@@ -182,9 +182,12 @@
   "dependencies": {
     "devtron": "^1.4.0",
     "electron-debug": "^1.2.0",
+    "filesize": "^3.5.10",
     "font-awesome": "^4.7.0",
     "fs": "^0.0.1-security",
     "history": "^4.6.3",
+    "immutability-helper": "^2.3.1",
+    "material-ui": "^0.19.0",
     "os": "^0.1.1",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
@@ -196,7 +199,6 @@
     "redux": "^3.7.1",
     "redux-thunk": "^2.2.0",
     "request": "^2.75.0",
-    "rmdir": "^1.2.0",
     "source-map-support": "^0.4.15",
     "tar-fs": "^1.13.2"
   },

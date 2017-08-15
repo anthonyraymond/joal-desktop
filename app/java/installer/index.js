@@ -30,6 +30,13 @@ import tar from 'tar-fs';
 import request from 'request';
 import childProcess from 'child_process';
 import { app } from 'electron';
+import {
+  JRE_READY,
+  JRE_WILL_DOWNLOAD,
+  JRE_START_DOWNLOAD,
+  JRE_DOWNLOAD_HAS_PROGRESSED,
+  JRE_DOWNLOAD_FAILED
+} from './ipcEvents';
 
 const majorVersion = '8';
 const updateNumber = '144';
@@ -115,17 +122,15 @@ class JavaInstaller {
     return `https://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${this.platform()}-${this.arch()}.tar.gz`;
   }
 
-  installIfRequired(callbackP) {
-    const callback = callbackP || (() => {});
-
+  installIfRequired(eventSender) {
     if (this.isJavaInstalled()) {
-      callback();
+      eventSender.send(JRE_READY);
       return;
     }
 
-    const urlStr = this.url();
-    console.log(`Downloading from: ${urlStr}`);
-    console.log(`Will install in ${this.jreDir}`);
+    eventSender.send(JRE_WILL_DOWNLOAD);
+    let i = 0;
+    let chuckBuffer = 0;
     rmdir(this.jreDir);
     request
       .get({
@@ -136,23 +141,31 @@ class JavaInstaller {
           connection: 'keep-alive',
           Cookie: 'gpw_e24=http://www.oracle.com/; oraclelicense=accept-securebackup-cookie'
         }
-      })/*
+      })
       .on('response', res => {
         const len = parseInt(res.headers['content-length'], 10);
-        const bar = new ProgressBar('  downloading and preparing JRE [:bar] :percent :etas', {
-          complete: '=',
-          incomplete: ' ',
-          width: 80,
-          total: len
+        eventSender.send(JRE_START_DOWNLOAD, len);
+
+        res.on('data', chunk => {
+          i += 1;
+          chuckBuffer += chunk.length;
+          if (i >= 200) {
+            eventSender.send(JRE_DOWNLOAD_HAS_PROGRESSED, chuckBuffer);
+            i = 0;
+            chuckBuffer = 0;
+          }
         });
-        res.on('data', chunk => bar.tick(chunk.length));
-      })*/
-      .on('error', err => {
-        // TODO: dispatch error?
-        console.log(`problem with request: ${err.message}`);
-        callback(err);
       })
-      .on('end', () => { if (this.isJavaInstalled()) callback(); else callback('Smoketest failed.'); })
+      .on('error', err => {
+        eventSender.send(JRE_DOWNLOAD_FAILED, err);
+      })
+      .on('end', () => {
+        if (this.isJavaInstalled()) {
+          eventSender.send(JRE_READY);
+        } else {
+          eventSender.send(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install');
+        }
+      })
       .pipe(zlib.createUnzip())
       .pipe(tar.extract(this.jreDir));
   }

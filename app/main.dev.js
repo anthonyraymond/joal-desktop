@@ -10,14 +10,13 @@
  *
  * @flow
  */
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import MenuBuilder from './menu';
 import JavaInstaller from './java/installer';
 
-const javaInstaller = new JavaInstaller();
-javaInstaller.installIfRequired((err) => {
-  if (err) console.log('err=', err);
-  else console.log('OK !!!');
+ipcMain.on('install-jre-if-needed', (event) => {
+  const javaInstaller = new JavaInstaller();
+  javaInstaller.installIfRequired(event.sender);
 });
 
 let mainWindow = null;
