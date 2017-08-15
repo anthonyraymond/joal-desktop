@@ -12,6 +12,13 @@
  */
 import { app, BrowserWindow } from 'electron';
 import MenuBuilder from './menu';
+import JavaInstaller from './java/installer';
+
+const javaInstaller = new JavaInstaller();
+javaInstaller.installIfRequired((err) => {
+  if (err) console.log('err=', err);
+  else console.log('OK !!!');
+});
 
 let mainWindow = null;
 

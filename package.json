@@ -1,6 +1,6 @@
 {
-  "name": "electron-react-boilerplate",
-  "productName": "ElectronReact",
+  "name": "joal-desktop",
+  "productName": "JoalDesktop",
   "version": "0.12.0",
   "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
   "scripts": {
@@ -31,8 +31,8 @@
   },
   "browserslist": "electron 1.6",
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.develar.ElectronReact",
+    "productName": "JoalDesktop",
+    "appId": "org.araymond.joal.desktop",
     "files": [
       "dist/",
       "node_modules/",
@@ -85,15 +85,9 @@
     "url": "https://github.com/chentsulin/electron-react-boilerplate/issues"
   },
   "keywords": [
-    "electron",
-    "boilerplate",
-    "react",
-    "redux",
-    "flow",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "joal",
+    "desktop",
+    "joal-desktop"
   ],
   "homepage": "https://github.com/chentsulin/electron-react-boilerplate#readme",
   "jest": {
@@ -189,7 +183,9 @@
     "devtron": "^1.4.0",
     "electron-debug": "^1.2.0",
     "font-awesome": "^4.7.0",
+    "fs": "^0.0.1-security",
     "history": "^4.6.3",
+    "os": "^0.1.1",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-hot-loader": "3.0.0-beta.6",
@@ -199,7 +195,10 @@
     "react-router-redux": "^5.0.0-alpha.6",
     "redux": "^3.7.1",
     "redux-thunk": "^2.2.0",
-    "source-map-support": "^0.4.15"
+    "request": "^2.75.0",
+    "rmdir": "^1.2.0",
+    "source-map-support": "^0.4.15",
+    "tar-fs": "^1.13.2"
   },
   "devEngines": {
     "node": ">=7.x",
