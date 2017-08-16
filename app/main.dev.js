@@ -13,10 +13,14 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import MenuBuilder from './menu';
 import JavaInstaller from './java/installer';
+import JoalInstaller from './java/joal';
 
 ipcMain.on('install-jre-if-needed', (event) => {
   const javaInstaller = new JavaInstaller(event.sender);
   javaInstaller.installIfRequired();
+
+  const joalInstaller = new JoalInstaller();
+  joalInstaller.installIfNeeded();
 });
 
 let mainWindow = null;
