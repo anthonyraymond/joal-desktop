@@ -10,6 +10,10 @@ import mkdir from '../../utils/mkdir';
 import rmdir from '../../utils/rmdir';
 import cp from '../../utils/cp';
 import {
+  JOAL_IS_INSTALLED,
+  JOAL_WILL_DOWNLOAD,
+  JOAL_START_DOWNLOAD,
+  JOAL_DOWNLOAD_HAS_PROGRESSED,
   JOAL_INSTALL_FAILED
 } from './joalInstallerEvents';
 
@@ -59,25 +63,45 @@ export default class JoalUpdater extends events.EventEmitter {
     return true;
   }
 
+  _cleanJoalFolder() {
+    // Remvoe everything but 'config.json' and 'torrents' folder
+    const self = this;
+
+    const jarFilesPromises = [];
+    if (fs.existsSync(self.joalDir)) {
+      fs.readdirSync(self.joalDir) // delete all .jar
+        .filter(fileName => fileName.endsWith('.jar'))
+        .map(jar => rmdir(path.join(self.joalDir, jar)))
+        .forEach(promise => jarFilesPromises.push(promise));
+    }
+
+    return Promise.all([
+      rmdir(self.tempUpdateDir),
+      rmdir(self.clientFilesDir),
+      rmdir(self.joalCoreVersionFile),
+      ...jarFilesPromises
+    ]);
+  }
+
   async installIfNeeded() {
     const self = this;
 
     if (self._isLocalInstalled()) {
-      console.log('already installed');
-      // TODO: dispatch JOAL ready
+      self.emit(JOAL_IS_INSTALLED);
       return;
     }
 
-    // FIXME: this.eventSender.send(JRE_WILL_DOWNLOAD);
+    self.emit(JOAL_WILL_DOWNLOAD);
 
     const oldJsonConfigFile = path.join(self.joalDir, 'config.json');
     const newJsonConfigFile = path.join(self.tempUpdateDir, 'config.json');
 
-    await rmdir(self.tempUpdateDir);
-
-    let i = 0;
-    let chuckBuffer = 0;
-
+    try {
+      await self._cleanJoalFolder();
+    } catch (err) {
+      self.emit(JOAL_INSTALL_FAILED, `An error occured while cleaning JOAL folder before install: ${err}`);
+      return;
+    }
     request.get({
       url: self.downloadUrl,
       rejectUnauthorized: false,
@@ -88,34 +112,32 @@ export default class JoalUpdater extends events.EventEmitter {
       }
     })
     .on('response', res => {
+      // TODO: Si on tombe sur un 404, on arrive ici?
       const len = parseInt(res.headers['content-length'], 10);
-      // FIXME: this.eventSender.send(JRE_START_DOWNLOAD, len);
+      self.emit(JOAL_START_DOWNLOAD, len);
+
+      const hundredthOfLength = Math.floor(len / 100);
+      let chunkDownloadedSinceLastEmit = 0;
       res.on('data', chunk => {
-        i += 1;
-        chuckBuffer += chunk.length;
-        if (i >= 200) {
-          // FIXME: this.eventSender.send(JRE_DOWNLOAD_HAS_PROGRESSED, chuckBuffer);
-          i = 0;
-          chuckBuffer = 0;
+        chunkDownloadedSinceLastEmit += chunk.length;
+        // We will report at top 100 events per download
+        if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
+          const downloadedBytes = chunkDownloadedSinceLastEmit;
+          chunkDownloadedSinceLastEmit = 0;
+          self.emit(JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
         }
       });
     })
     .on('error', err => {
       self.emit(JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
-      // TODO: remove all but config.json
-      rmdir(self.joalDir);
-      // FIXME: this.eventSender.send(JRE_DOWNLOAD_FAILED, err.message);
+      self._cleanJoalFolder();
     })
     .pipe(zlib.createUnzip())
-    .pipe(tar.extract(self.tempUpdateDir, {
-      ignore: (name, header) => header.type === 'directory' && name === 'torrents'
-    }))
+    .pipe(tar.extract(self.tempUpdateDir))
     .on('finish', () => { // FIXME: does 'end' set a param? maybe an error message on fail.
       // delete the old clients folder
-      rmdir(self.clientFilesDir).then(() => (
-        cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)
-      ))
-      .then(() => { /* eslint-disable promise/always-return */
+      cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)
+      .then(() => {
         // get previous config.json (if exists)
         let oldConfig = {};
         if (fs.existsSync(oldJsonConfigFile)) {
@@ -134,16 +156,9 @@ export default class JoalUpdater extends events.EventEmitter {
 
         // merge the two config (with old overriding new)
         const mergedConfig = Object.assign({}, newConfig, oldConfig);
-        // TODO: check if deleting first is needed
         fs.writeFileSync(oldJsonConfigFile, JSON.stringify(mergedConfig, null, 2));
-      }) /* eslint-enable promise/always-return */
-      .then(() => (
-        // delete .jar
-        Promise.all(fs.readdirSync(self.joalDir)
-          .filter(fileName => fileName.endsWith('.jar'))
-          .map(jar => rmdir(path.join(self.joalDir, jar)))
-        )
-      ))
+        return Promise.resolve();
+      })
       .then(() => (
         // copy /update-tmp/.jar to /.jar
         Promise.all(fs.readdirSync(self.tempUpdateDir)
@@ -157,29 +172,29 @@ export default class JoalUpdater extends events.EventEmitter {
       ))
       .then(() => {
         // create torrent folder
-        const promises = [];
-        if (!fs.existsSync(self.torrentsDir)) promises.push(mkdir(self.torrentsDir));
-        // eslint-disable-next-line max-len
-        if (!fs.existsSync(self.archivedTorrentsDir)) promises.push(mkdir(self.archivedTorrentsDir));
-        return Promise.all(promises);
+        if (!fs.existsSync(self.torrentsDir)) return mkdir(self.torrentsDir);
+        return Promise.resolve();
       })
-      .then(() => { // eslint-disable-line promise/always-return
+      .then(() => {
+        if (!fs.existsSync(self.archivedTorrentsDir)) return mkdir(self.archivedTorrentsDir);
+        return Promise.resolve();
+      })
+      .then(() => {
+        // write version file
         fs.writeFileSync(self.joalCoreVersionFile, self.joalCoreVersion);
-      }) /* eslint-enable promise/always-return */
-      .then(() => { /* eslint-disable promise/always-return */
+        return Promise.resolve();
+      })
+      .then(() => {
         if (self._isLocalInstalled()) {
-          // FIXME: this.eventSender.send(JRE_READY);
-          console.log('install succeed');
-        } else {
-          console.log('install failed');
+          self.emit(JOAL_IS_INSTALLED);
+          return Promise.resolve();
+        } else { // eslint-disable-line no-else-return
           throw new Error('Failed to validate joal deployement.');
         }
       })
       .catch((err) => {
         self.emit(JOAL_INSTALL_FAILED, `An error occured while deploying JOAL: ${err}`);
-        // TODO: remove all but config.json
-        console.log(err);
-        rmdir(self.joalDir);
+        self._cleanJoalFolder();
       });
     });
   }

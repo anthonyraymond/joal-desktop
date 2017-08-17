@@ -14,12 +14,24 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import MenuBuilder from './menu';
 import JavaInstaller from './java/installer';
 import JoalInstaller from './java/joal';
+import {
+  JOAL_IS_INSTALLED,
+  JOAL_WILL_DOWNLOAD,
+  JOAL_START_DOWNLOAD,
+  JOAL_DOWNLOAD_HAS_PROGRESSED,
+  JOAL_INSTALL_FAILED
+} from './java/joal/joalInstallerEvents';
 
 ipcMain.on('install-jre-if-needed', (event) => {
   const javaInstaller = new JavaInstaller(event.sender);
   javaInstaller.installIfRequired();
 
   const joalInstaller = new JoalInstaller();
+  joalInstaller.on(JOAL_IS_INSTALLED, () => console.log(JOAL_IS_INSTALLED));
+  joalInstaller.on(JOAL_WILL_DOWNLOAD, () => console.log(JOAL_WILL_DOWNLOAD));
+  joalInstaller.on(JOAL_START_DOWNLOAD, (len) => console.log(JOAL_START_DOWNLOAD, len));
+  joalInstaller.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => console.log(JOAL_DOWNLOAD_HAS_PROGRESSED, bytes));
+  joalInstaller.on(JOAL_INSTALL_FAILED, (err) => console.log(JOAL_INSTALL_FAILED, err));
   joalInstaller.installIfNeeded();
 });
 
