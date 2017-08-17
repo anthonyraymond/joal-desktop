@@ -1,0 +1,10 @@
+.progressWrapper {
+  position: relative;
+}
+
+.textProgress {
+  font-size: 14px;
+  position: absolute;
+  right: 0;
+  top: 4px;
+}

@@ -19,7 +19,21 @@ import {
   jreStartedDownloading,
   jreDownloadHasprogress,
   jreDownloadHasFailed
-} from './components/initializeStatus/jre/jre.action';
+} from './components/initializeStatus/jre/jre.actions';
+import {
+  JOAL_IS_INSTALLED,
+  JOAL_WILL_DOWNLOAD,
+  JOAL_START_DOWNLOAD,
+  JOAL_DOWNLOAD_HAS_PROGRESSED,
+  JOAL_INSTALL_FAILED
+} from './java/joal/joalInstallerEvents';
+import {
+  joalIsInstalled,
+  joalWillDownload,
+  joalStartedDownloading,
+  joalDownloadHasprogress,
+  joalInstallHasFailed
+} from './components/initializeStatus/joal/joal.actions';
 
 const store = configureStore();
 
@@ -59,6 +73,23 @@ ipcRenderer.on(JRE_DOWNLOAD_HAS_PROGRESSED, (event, downloaded) => {
   store.dispatch(jreDownloadHasprogress(downloaded));
 });
 ipcRenderer.on(JRE_DOWNLOAD_FAILED, (event, error) => {
-  store.dispatch(jreDownloadHasFailed(error.message));
+  store.dispatch(jreDownloadHasFailed(error));
 });
+
+ipcRenderer.on(JOAL_IS_INSTALLED, () => {
+  store.dispatch(joalIsInstalled());
+});
+ipcRenderer.on(JOAL_WILL_DOWNLOAD, () => {
+  store.dispatch(joalWillDownload());
+});
+ipcRenderer.on(JOAL_START_DOWNLOAD, (event, length) => {
+  store.dispatch(joalStartedDownloading(length));
+});
+ipcRenderer.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (event, downloaded) => {
+  store.dispatch(joalDownloadHasprogress(downloaded));
+});
+ipcRenderer.on(JOAL_INSTALL_FAILED, (event, error) => {
+  store.dispatch(joalInstallHasFailed(error));
+});
+
 ipcRenderer.send('install-jre-if-needed');

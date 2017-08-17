@@ -9,7 +9,7 @@ type Props = {
   progressMaxValue: number
 };
 
-const JRE = (props: Props) => {
+const JOAL = (props: Props) => {
   const { progressCurrentValue, progressMaxValue } = props;
   return (
     <div className={styles.progressWrapper}>
@@ -29,4 +29,4 @@ const JRE = (props: Props) => {
   );
 };
 
-export default JRE;
+export default JOAL;

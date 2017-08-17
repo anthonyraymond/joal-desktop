@@ -15,6 +15,13 @@ import MenuBuilder from './menu';
 import JavaInstaller from './java/installer';
 import JoalInstaller from './java/joal';
 import {
+  JRE_READY,
+  JRE_WILL_DOWNLOAD,
+  JRE_START_DOWNLOAD,
+  JRE_DOWNLOAD_HAS_PROGRESSED,
+  JRE_DOWNLOAD_FAILED
+} from './java/installer/ipcEvents';
+import {
   JOAL_IS_INSTALLED,
   JOAL_WILL_DOWNLOAD,
   JOAL_START_DOWNLOAD,
@@ -23,15 +30,23 @@ import {
 } from './java/joal/joalInstallerEvents';
 
 ipcMain.on('install-jre-if-needed', (event) => {
-  const javaInstaller = new JavaInstaller(event.sender);
+  console.log(event);
+  const send = event.sender.send;
+  // Since we can't obtain redux store here, we relay event to the renderer process
+  const javaInstaller = new JavaInstaller();
+  javaInstaller.on(JRE_READY, () => event.sender.send(JRE_READY));
+  javaInstaller.on(JRE_WILL_DOWNLOAD, () => event.sender.send(JRE_WILL_DOWNLOAD));
+  javaInstaller.on(JRE_START_DOWNLOAD, (len) => event.sender.send(JRE_START_DOWNLOAD, len));
+  javaInstaller.on(JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(JRE_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
+  javaInstaller.on(JRE_DOWNLOAD_FAILED, (err) => event.sender.send(JRE_DOWNLOAD_FAILED, err));
   javaInstaller.installIfRequired();
 
   const joalInstaller = new JoalInstaller();
-  joalInstaller.on(JOAL_IS_INSTALLED, () => console.log(JOAL_IS_INSTALLED));
-  joalInstaller.on(JOAL_WILL_DOWNLOAD, () => console.log(JOAL_WILL_DOWNLOAD));
-  joalInstaller.on(JOAL_START_DOWNLOAD, (len) => console.log(JOAL_START_DOWNLOAD, len));
-  joalInstaller.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => console.log(JOAL_DOWNLOAD_HAS_PROGRESSED, bytes));
-  joalInstaller.on(JOAL_INSTALL_FAILED, (err) => console.log(JOAL_INSTALL_FAILED, err));
+  joalInstaller.on(JOAL_IS_INSTALLED, () => event.sender.send(JOAL_IS_INSTALLED));
+  joalInstaller.on(JOAL_WILL_DOWNLOAD, () => event.sender.send(JOAL_WILL_DOWNLOAD));
+  joalInstaller.on(JOAL_START_DOWNLOAD, (len) => event.sender.send(JOAL_START_DOWNLOAD, len));
+  joalInstaller.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(JOAL_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
+  joalInstaller.on(JOAL_INSTALL_FAILED, (err) => event.sender.send(JOAL_INSTALL_FAILED, err));
   joalInstaller.installIfNeeded();
 });
 

@@ -1,12 +1,15 @@
 // @flow
 import React from 'react';
-import Jre from './jre';
+import JRE from './jre';
+import JOAL from './joal';
 
 const InitializeStatus = (props) => {
   return (
     <div>
       <h1>Jre</h1>
-      <Jre />
+      <JRE />
+      <h1>Joal</h1>
+      <JOAL />
     </div>
   );
 };

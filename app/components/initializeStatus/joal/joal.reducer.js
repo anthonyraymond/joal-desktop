@@ -6,7 +6,7 @@ import {
   DOWNLOAD_STARTED,
   DOWNLOAD_HAS_PROGRESSED,
   INSTALL_FAILED
-} from './jre.actions';
+} from './joal.actions';
 
 const initialState = {
   installed: false,

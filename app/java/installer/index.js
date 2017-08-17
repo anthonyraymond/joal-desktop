@@ -24,12 +24,13 @@
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
-import rmdir from 'rmdir';
 import zlib from 'zlib';
 import tar from 'tar-fs';
 import request from 'request';
 import childProcess from 'child_process';
+import events from 'events';
 import { app } from 'electron';
+import rmdir from '../../utils/rmdir';
 import {
   JRE_READY,
   JRE_WILL_DOWNLOAD,
@@ -66,13 +67,16 @@ const url = () => (
   `https://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${platform()}-${arch()}.tar.gz`
 );
 
-class JavaInstaller {
-  constructor(eventSender) {
-    this.eventSender = eventSender;
-    this.jreDir = path.join(app.getPath('userData'), 'jre');
+class JavaInstaller extends events.EventEmitter {
+  constructor() {
+    super();
+
+    const self = this;
+    self.jreDir = path.join(app.getPath('userData'), 'jre');
   }
 
   driver() {
+    const self = this;
     // don't use platform() here, since the variable is renamed !
     const systemPlatform = os.platform();
     let driver;
@@ -83,11 +87,11 @@ class JavaInstaller {
       default: throw new Error(`unsupported platform: ${systemPlatform}`);
     }
 
-    const jreDirs = JavaInstaller.getDirectories(this.jreDir);
-    if (jreDirs.length < 1) throw new Error('no jre found in archive');
+    const jreDirs = JavaInstaller.getDirectories(self.jreDir);
+    if (jreDirs.length < 1) throw new Error('no jre found');
     const d = driver.slice();
     d.unshift(jreDirs[0]);
-    d.unshift(this.jreDir);
+    d.unshift(self.jreDir);
     return path.join(...d);
   }
 
@@ -98,12 +102,14 @@ class JavaInstaller {
   }
 
   spawnSync() {
-    return childProcess.spawnSync(this.driver(), ['-version'], { encoding: 'utf8' });
+    const self = this;
+    return childProcess.spawnSync(self.driver(), ['-version'], { encoding: 'utf8' });
   }
 
   isJavaInstalled() {
+    const self = this;
     const javaResponse = childProcess.spawnSync(
-      this.driver(),
+      self.driver(),
       ['-version'],
       { encoding: 'utf8' } // this is not a jvm param, it tells childProcess to return raw text instead of a Buffer
     );
@@ -111,61 +117,68 @@ class JavaInstaller {
     return javaResponse.stderr && javaResponse.stderr.startsWith(`java version "${javaVestionString}"`);
   }
 
-  installIfRequired() {
+  async installIfRequired() {
+    const self = this;
+
     try {
-      if (this.isJavaInstalled()) {
-        this.eventSender.send(JRE_READY);
+      if (self.isJavaInstalled()) {
+        self.emit(JRE_READY);
         return;
       }
     } catch (err) {
-      // if java is not installed skip this and install.
+      // Will fail if java is missing, handling all cases are a pain in the ass, better catch ex
+      // If java is not installed skip this and install.
     }
+
+    self.emit(JRE_WILL_DOWNLOAD);
 
     try {
-      this.eventSender.send(JRE_WILL_DOWNLOAD);
-      let i = 0;
-      let chuckBuffer = 0;
-      rmdir(this.jreDir);
-      request
-        .get({
-          url: url(),
-          rejectUnauthorized: false,
-          agent: false,
-          headers: {
-            connection: 'keep-alive',
-            Cookie: 'gpw_e24=http://www.oracle.com/; oraclelicense=accept-securebackup-cookie'
-          }
-        })
-        .on('response', res => {
-          const len = parseInt(res.headers['content-length'], 10);
-          this.eventSender.send(JRE_START_DOWNLOAD, len);
-
-          res.on('data', chunk => {
-            i += 1;
-            chuckBuffer += chunk.length;
-            if (i >= 200) {
-              this.eventSender.send(JRE_DOWNLOAD_HAS_PROGRESSED, chuckBuffer);
-              i = 0;
-              chuckBuffer = 0;
-            }
-          });
-        })
-        .on('error', err => {
-          this.eventSender.send(JRE_DOWNLOAD_FAILED, err);
-        })
-        .on('end', () => {
-          if (this.isJavaInstalled()) {
-            this.eventSender.send(JRE_READY);
-          } else {
-            this.eventSender.send(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install');
-          }
-        })
-        .pipe(zlib.createUnzip())
-        .pipe(tar.extract(this.jreDir));
+      await rmdir(self.jreDir);
     } catch (err) {
-      console.log(err);
-      this.eventSender.send(JRE_DOWNLOAD_FAILED, err.message);
+      self.emit(JRE_DOWNLOAD_FAILED, `An error occured while removing JRE folder before install: ${err.message}`);
+      return;
     }
+
+    request
+      .get({
+        url: url(),
+        rejectUnauthorized: false,
+        agent: false,
+        headers: {
+          connection: 'keep-alive',
+          Cookie: 'gpw_e24=http://www.oracle.com/; oraclelicense=accept-securebackup-cookie'
+        }
+      })
+      .on('response', res => {
+        const len = parseInt(res.headers['content-length'], 10);
+        self.emit(JRE_START_DOWNLOAD, len);
+
+        const hundredthOfLength = Math.floor(len / 100);
+        let chunkDownloadedSinceLastEmit = 0;
+        res.on('data', chunk => {
+          chunkDownloadedSinceLastEmit += chunk.length;
+          // We will report at top 100 events per download
+          if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
+            const downloadedBytes = chunkDownloadedSinceLastEmit;
+            chunkDownloadedSinceLastEmit = 0;
+            self.emit(JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
+          }
+        });
+      })
+      .on('error', err => {
+        self.emit(JRE_DOWNLOAD_FAILED, err.message);
+        rmdir(self.jreDir);
+      })
+      .pipe(zlib.createUnzip())
+      .pipe(tar.extract(self.jreDir))
+      .on('finish', () => {
+        try {
+          if (self.isJavaInstalled()) self.emit(JRE_READY);
+          else self.emit(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+        } catch (err) {
+          self.emit(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install:', err.message);
+        }
+      });
   }
 }
 

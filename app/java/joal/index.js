@@ -93,9 +93,6 @@ export default class JoalUpdater extends events.EventEmitter {
 
     self.emit(JOAL_WILL_DOWNLOAD);
 
-    const oldJsonConfigFile = path.join(self.joalDir, 'config.json');
-    const newJsonConfigFile = path.join(self.tempUpdateDir, 'config.json');
-
     try {
       await self._cleanJoalFolder();
     } catch (err) {
@@ -139,6 +136,9 @@ export default class JoalUpdater extends events.EventEmitter {
       cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)
       .then(() => {
         // get previous config.json (if exists)
+        const oldJsonConfigFile = path.join(self.joalDir, 'config.json');
+        const newJsonConfigFile = path.join(self.tempUpdateDir, 'config.json');
+
         let oldConfig = {};
         if (fs.existsSync(oldJsonConfigFile)) {
           try {
