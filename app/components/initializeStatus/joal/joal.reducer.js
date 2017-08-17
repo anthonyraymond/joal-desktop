@@ -1,7 +1,7 @@
 // @flow
 import update from 'immutability-helper';
 import {
-  READY,
+  INSTALLED,
   WILL_DOWNLOAD,
   DOWNLOAD_STARTED,
   DOWNLOAD_HAS_PROGRESSED,
@@ -19,7 +19,7 @@ const initialState = {
 
 export default function counter(state = initialState, action) {
   switch (action.type) {
-    case READY:
+    case INSTALLED:
       return update(state, {
         installed: { $set: true },
         downloadStats: { length: { $set: 100 }, downloaded: { $set: 100 } }

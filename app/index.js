@@ -15,9 +15,9 @@ import {
   EVENT_JRE_INSTALL_FAILED
 } from './java/installer/jreInstallerEvent';
 import {
-  jreIsReady,
+  jreIsInstalled,
   jreWillDownload,
-  jreStartedDownloading,
+  jreDownloadStarted,
   jreDownloadHasprogress,
   jreDownloadHasFailed
 } from './components/initializeStatus/jre/jre.actions';
@@ -31,7 +31,7 @@ import {
 import {
   joalIsInstalled,
   joalWillDownload,
-  joalStartedDownloading,
+  joalDownloadStarted,
   joalDownloadHasprogress,
   joalInstallHasFailed
 } from './components/initializeStatus/joal/joal.actions';
@@ -64,17 +64,17 @@ if (module.hot) {
 const { app } = require('electron').remote;
 
 const java = new JavaInstaller(app);
-java.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsReady()));
+java.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
 java.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
-java.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => store.dispatch(jreStartedDownloading(size)));
-java.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(jreDownloadHasprogress(bytes)));
+java.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => store.dispatch(jreDownloadStarted(size)));
+java.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(jreDownloadHasprogress(bytes))); // eslint-disable-line max-len
 java.on(EVENT_JRE_INSTALL_FAILED, (err) => store.dispatch(jreDownloadHasFailed(err)));
 java.installIfRequired();
 
 const joal = new JoalInstaller(app);
 joal.on(EVENT_JOAL_INSTALLED, () => store.dispatch(joalIsInstalled()));
 joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
-joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => store.dispatch(joalStartedDownloading(size)));
-joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(joalDownloadHasprogress(bytes)));
+joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => store.dispatch(joalDownloadStarted(size)));
+joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(joalDownloadHasprogress(bytes))); // eslint-disable-line max-len
 joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => store.dispatch(joalInstallHasFailed(err)));
 joal.installIfNeeded();
