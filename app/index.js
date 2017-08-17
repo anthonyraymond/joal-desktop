@@ -1,4 +1,3 @@
-import { ipcRenderer } from 'electron';
 import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
@@ -6,13 +5,15 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import Root from './components/Root';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
+import JavaInstaller from './java/installer';
+import JoalInstaller from './java/joal';
 import {
   JRE_READY,
   JRE_WILL_DOWNLOAD,
   JRE_START_DOWNLOAD,
   JRE_DOWNLOAD_HAS_PROGRESSED,
   JRE_DOWNLOAD_FAILED
-} from './java/installer/ipcEvents';
+} from './java/installer/jreInstallerEvent';
 import {
   jreIsReady,
   jreWillDownload,
@@ -60,36 +61,20 @@ if (module.hot) {
   });
 }
 
-ipcRenderer.on(JRE_READY, () => {
-  store.dispatch(jreIsReady());
-});
-ipcRenderer.on(JRE_WILL_DOWNLOAD, () => {
-  store.dispatch(jreWillDownload());
-});
-ipcRenderer.on(JRE_START_DOWNLOAD, (event, length) => {
-  store.dispatch(jreStartedDownloading(length));
-});
-ipcRenderer.on(JRE_DOWNLOAD_HAS_PROGRESSED, (event, downloaded) => {
-  store.dispatch(jreDownloadHasprogress(downloaded));
-});
-ipcRenderer.on(JRE_DOWNLOAD_FAILED, (event, error) => {
-  store.dispatch(jreDownloadHasFailed(error));
-});
+const { app } = require('electron').remote;
 
-ipcRenderer.on(JOAL_IS_INSTALLED, () => {
-  store.dispatch(joalIsInstalled());
-});
-ipcRenderer.on(JOAL_WILL_DOWNLOAD, () => {
-  store.dispatch(joalWillDownload());
-});
-ipcRenderer.on(JOAL_START_DOWNLOAD, (event, length) => {
-  store.dispatch(joalStartedDownloading(length));
-});
-ipcRenderer.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (event, downloaded) => {
-  store.dispatch(joalDownloadHasprogress(downloaded));
-});
-ipcRenderer.on(JOAL_INSTALL_FAILED, (event, error) => {
-  store.dispatch(joalInstallHasFailed(error));
-});
+const java = new JavaInstaller(app);
+java.on(JRE_READY, () => store.dispatch(jreIsReady()));
+java.on(JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
+java.on(JRE_START_DOWNLOAD, (size) => store.dispatch(jreStartedDownloading(size)));
+java.on(JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(jreDownloadHasprogress(bytes)));
+java.on(JRE_DOWNLOAD_FAILED, (err) => store.dispatch(jreDownloadHasFailed(err)));
+java.installIfRequired();
 
-ipcRenderer.send('install-jre-if-needed');
+const joal = new JoalInstaller(app);
+joal.on(JOAL_IS_INSTALLED, () => store.dispatch(joalIsInstalled()));
+joal.on(JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
+joal.on(JOAL_START_DOWNLOAD, (size) => store.dispatch(joalStartedDownloading(size)));
+joal.on(JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(joalDownloadHasprogress(bytes)));
+joal.on(JOAL_INSTALL_FAILED, (err) => store.dispatch(joalInstallHasFailed(err)));
+joal.installIfNeeded();

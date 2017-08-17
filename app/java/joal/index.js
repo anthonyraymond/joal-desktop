@@ -5,7 +5,6 @@ import path from 'path';
 import request from 'request';
 import zlib from 'zlib'; // FIXME: apparament zlib est intégré a NodeJs, donc on peut peut être enlever la dep du package.json
 import tar from 'tar-fs';
-import { app } from 'electron';
 import mkdir from '../../utils/mkdir';
 import rmdir from '../../utils/rmdir';
 import cp from '../../utils/cp';
@@ -19,10 +18,13 @@ import {
 
 
 export default class JoalUpdater extends events.EventEmitter {
-  constructor() {
+  constructor(app) {
+    // we can't import app here, because it change if called from main or renderer process
+    //  so we get it as an argument
     super();
-
     const self = this;
+
+    self.app = app;
     self.joalDir = path.join(app.getPath('userData'), 'joal-core');
     self.tempUpdateDir = path.join(self.joalDir, 'update-tmp');
     self.clientFilesDir = path.join(self.joalDir, 'clients');

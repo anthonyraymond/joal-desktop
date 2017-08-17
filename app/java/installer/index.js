@@ -29,7 +29,6 @@ import tar from 'tar-fs';
 import request from 'request';
 import childProcess from 'child_process';
 import events from 'events';
-import { app } from 'electron';
 import rmdir from '../../utils/rmdir';
 import {
   JRE_READY,
@@ -37,7 +36,7 @@ import {
   JRE_START_DOWNLOAD,
   JRE_DOWNLOAD_HAS_PROGRESSED,
   JRE_DOWNLOAD_FAILED
-} from './ipcEvents';
+} from './jreInstallerEvent';
 
 const majorVersion = '8';
 const updateNumber = '144';
@@ -68,11 +67,14 @@ const url = () => (
 );
 
 class JavaInstaller extends events.EventEmitter {
-  constructor() {
+  constructor(app) {
+    // we can't import app here, because it change if called from main or renderer process
+    //  so we get it as an argument
     super();
-
     const self = this;
-    self.jreDir = path.join(app.getPath('userData'), 'jre');
+
+    self.app = app;
+    self.jreDir = path.join(self.app.getPath('userData'), 'jre');
   }
 
   driver() {
