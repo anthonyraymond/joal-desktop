@@ -1,3 +1,4 @@
+import { remote } from 'electron';
 import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
@@ -61,7 +62,7 @@ if (module.hot) {
   });
 }
 
-const { app } = require('electron').remote;
+const { app } = remote;
 
 const java = new JavaInstaller(app);
 java.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
