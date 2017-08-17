@@ -9,11 +9,11 @@ import mkdir from '../../utils/mkdir';
 import rmdir from '../../utils/rmdir';
 import cp from '../../utils/cp';
 import {
-  JOAL_IS_INSTALLED,
-  JOAL_WILL_DOWNLOAD,
-  JOAL_START_DOWNLOAD,
-  JOAL_DOWNLOAD_HAS_PROGRESSED,
-  JOAL_INSTALL_FAILED
+  EVENT_JOAL_INSTALLED,
+  EVENT_JOAL_WILL_DOWNLOAD,
+  EVENT_JOAL_DOWNLOAD_STARTED,
+  EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JOAL_INSTALL_FAILED
 } from './joalInstallerEvents';
 
 
@@ -89,16 +89,16 @@ export default class JoalUpdater extends events.EventEmitter {
     const self = this;
 
     if (self._isLocalInstalled()) {
-      self.emit(JOAL_IS_INSTALLED);
+      self.emit(EVENT_JOAL_INSTALLED);
       return;
     }
 
-    self.emit(JOAL_WILL_DOWNLOAD);
+    self.emit(EVENT_JOAL_WILL_DOWNLOAD);
 
     try {
       await self._cleanJoalFolder();
     } catch (err) {
-      self.emit(JOAL_INSTALL_FAILED, `An error occured while cleaning JOAL folder before install: ${err}`);
+      self.emit(EVENT_JOAL_INSTALL_FAILED, `An error occured while cleaning JOAL folder before install: ${err}`);
       return;
     }
     request.get({
@@ -113,7 +113,7 @@ export default class JoalUpdater extends events.EventEmitter {
     .on('response', res => {
       // TODO: Si on tombe sur un 404, on arrive ici?
       const len = parseInt(res.headers['content-length'], 10);
-      self.emit(JOAL_START_DOWNLOAD, len);
+      self.emit(EVENT_JOAL_DOWNLOAD_STARTED, len);
 
       const hundredthOfLength = Math.floor(len / 100);
       let chunkDownloadedSinceLastEmit = 0;
@@ -123,12 +123,12 @@ export default class JoalUpdater extends events.EventEmitter {
         if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
           const downloadedBytes = chunkDownloadedSinceLastEmit;
           chunkDownloadedSinceLastEmit = 0;
-          self.emit(JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
+          self.emit(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
         }
       });
     })
     .on('error', err => {
-      self.emit(JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
+      self.emit(EVENT_JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
       self._cleanJoalFolder();
     })
     .pipe(zlib.createUnzip())
@@ -188,14 +188,14 @@ export default class JoalUpdater extends events.EventEmitter {
       })
       .then(() => {
         if (self._isLocalInstalled()) {
-          self.emit(JOAL_IS_INSTALLED);
+          self.emit(EVENT_JOAL_INSTALLED);
           return Promise.resolve();
         } else { // eslint-disable-line no-else-return
           throw new Error('Failed to validate joal deployement.');
         }
       })
       .catch((err) => {
-        self.emit(JOAL_INSTALL_FAILED, `An error occured while deploying JOAL: ${err}`);
+        self.emit(EVENT_JOAL_INSTALL_FAILED, `An error occured while deploying JOAL: ${err}`);
         self._cleanJoalFolder();
       });
     });

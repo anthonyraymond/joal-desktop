@@ -31,11 +31,11 @@ import childProcess from 'child_process';
 import events from 'events';
 import rmdir from '../../utils/rmdir';
 import {
-  JRE_READY,
-  JRE_WILL_DOWNLOAD,
-  JRE_START_DOWNLOAD,
-  JRE_DOWNLOAD_HAS_PROGRESSED,
-  JRE_DOWNLOAD_FAILED
+  EVENT_JRE_INSTALLED,
+  EVENT_JRE_WILL_DOWNLOAD,
+  EVENT_JRE_DOWNLOAD_STARTED,
+  EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JRE_INSTALL_FAILED
 } from './jreInstallerEvent';
 
 const majorVersion = '8';
@@ -124,7 +124,7 @@ class JavaInstaller extends events.EventEmitter {
 
     try {
       if (self.isJavaInstalled()) {
-        self.emit(JRE_READY);
+        self.emit(EVENT_JRE_INSTALLED);
         return;
       }
     } catch (err) {
@@ -132,12 +132,12 @@ class JavaInstaller extends events.EventEmitter {
       // If java is not installed skip this and install.
     }
 
-    self.emit(JRE_WILL_DOWNLOAD);
+    self.emit(EVENT_JRE_WILL_DOWNLOAD);
 
     try {
       await rmdir(self.jreDir);
     } catch (err) {
-      self.emit(JRE_DOWNLOAD_FAILED, `An error occured while removing JRE folder before install: ${err.message}`);
+      self.emit(EVENT_JRE_INSTALL_FAILED, `An error occured while removing JRE folder before install: ${err.message}`);
       return;
     }
 
@@ -153,7 +153,7 @@ class JavaInstaller extends events.EventEmitter {
       })
       .on('response', res => {
         const len = parseInt(res.headers['content-length'], 10);
-        self.emit(JRE_START_DOWNLOAD, len);
+        self.emit(EVENT_JRE_DOWNLOAD_STARTED, len);
 
         const hundredthOfLength = Math.floor(len / 100);
         let chunkDownloadedSinceLastEmit = 0;
@@ -163,22 +163,22 @@ class JavaInstaller extends events.EventEmitter {
           if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
             const downloadedBytes = chunkDownloadedSinceLastEmit;
             chunkDownloadedSinceLastEmit = 0;
-            self.emit(JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
+            self.emit(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
           }
         });
       })
       .on('error', err => {
-        self.emit(JRE_DOWNLOAD_FAILED, err.message);
+        self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
         rmdir(self.jreDir);
       })
       .pipe(zlib.createUnzip())
       .pipe(tar.extract(self.jreDir))
       .on('finish', () => {
         try {
-          if (self.isJavaInstalled()) self.emit(JRE_READY);
-          else self.emit(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+          if (self.isJavaInstalled()) self.emit(EVENT_JRE_INSTALLED);
+          else self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
         } catch (err) {
-          self.emit(JRE_DOWNLOAD_FAILED, 'Failed to validate jre install:', err.message);
+          self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', err.message);
         }
       });
   }
