@@ -5,7 +5,8 @@ function mapStateToProps(state) {
   return {
     progressMaxValue: state.joal.downloadStats.length,
     progressCurrentValue: state.joal.downloadStats.downloaded,
-    error: state.joal.error
+    error: state.joal.error,
+    hasCompleted: state.joal.hasCompleted
   };
 }
 

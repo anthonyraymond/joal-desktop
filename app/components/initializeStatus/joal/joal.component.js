@@ -7,11 +7,12 @@ import styles from './style.css';
 type Props = {
   progressCurrentValue: number,
   progressMaxValue: number,
-  error?: string
+  error?: string,
+  hasCompleted: boolean
 };
 
 const Joal = (props: Props) => {
-  const { progressCurrentValue, progressMaxValue, error } = props;
+  const { progressCurrentValue, progressMaxValue, error, hasCompleted } = props;
   return (
     <div className={styles.progressWrapper}>
       { !error &&
@@ -23,7 +24,7 @@ const Joal = (props: Props) => {
           />
         </div>
       }
-      { (progressCurrentValue !== progressMaxValue) && progressCurrentValue !== 0 &&
+      { !hasCompleted && progressCurrentValue !== 0 &&
         <div className={styles.textProgress}>
           {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
         </div>

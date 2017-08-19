@@ -10,6 +10,7 @@ import {
 
 const initialState = {
   installed: false,
+  hasCompleted: false,
   error: '',
   downloadStats: {
     length: 0,
@@ -22,6 +23,7 @@ export default function counter(state = initialState, action) {
     case INSTALLED:
       return update(state, {
         installed: { $set: true },
+        hasCompleted: { $set: true },
         downloadStats: { length: { $set: 100 }, downloaded: { $set: 100 } }
       });
     case WILL_DOWNLOAD:
@@ -44,6 +46,7 @@ export default function counter(state = initialState, action) {
       });
     case INSTALL_FAILED:
       return update(state, {
+        hasCompleted: { $set: true },
         error: { $set: action.error }
       });
     default:
