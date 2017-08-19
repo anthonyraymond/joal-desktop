@@ -6,27 +6,36 @@ import styles from './style.css';
 
 type Props = {
   progressCurrentValue: number,
-  progressMaxValue: number
+  progressMaxValue: number,
+  error?: string
 };
 
-const JRE = (props: Props) => {
-  const { progressCurrentValue, progressMaxValue } = props;
+const Jre = (props: Props) => {
+  const { progressCurrentValue, progressMaxValue, error } = props;
   return (
     <div className={styles.progressWrapper}>
-      <div>
-        <LinearProgress
-          mode="determinate"
-          max={progressMaxValue}
-          value={progressCurrentValue}
-        />
-      </div>
+      { !error &&
+        <div>
+          <LinearProgress
+            mode="determinate"
+            max={progressMaxValue}
+            value={progressCurrentValue}
+          />
+        </div>
+      }
       { (progressCurrentValue !== progressMaxValue) && progressCurrentValue !== 0 &&
         <div className={styles.textProgress}>
           {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
         </div>
       }
+      { error &&
+        <div>{error}</div>
+      }
     </div>
   );
 };
+Jre.defaultProps = {
+  error: ''
+};
 
-export default JRE;
+export default Jre;
