@@ -1,4 +1,4 @@
-import { remote } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
@@ -63,19 +63,48 @@ if (module.hot) {
 }
 
 const { app } = remote;
+let jreHasFinished = false;
+let joalHasFinished = false;
+const notifyCloseAllowedIfBothAreFinished = () => {
+  if (!jreHasFinished || !joalHasFinished) return;
+  ipcRenderer.send('allow-close');
+};
 
 const java = new JavaInstaller(app);
-java.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
+java.on(EVENT_JRE_INSTALLED, () => {
+  store.dispatch(jreIsInstalled());
+  jreHasFinished = true;
+  notifyCloseAllowedIfBothAreFinished();
+});
 java.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
-java.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => store.dispatch(jreDownloadStarted(size)));
+java.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => {
+  store.dispatch(jreDownloadStarted(size));
+  ipcRenderer.send('prevent-close');
+});
 java.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(jreDownloadHasprogress(bytes))); // eslint-disable-line max-len
-java.on(EVENT_JRE_INSTALL_FAILED, (err) => store.dispatch(jreDownloadHasFailed(err)));
+java.on(EVENT_JRE_INSTALL_FAILED, (err) => {
+  store.dispatch(jreDownloadHasFailed(err));
+  jreHasFinished = true;
+  notifyCloseAllowedIfBothAreFinished();
+});
 java.installIfRequired();
 
+
 const joal = new JoalInstaller(app);
-joal.on(EVENT_JOAL_INSTALLED, () => store.dispatch(joalIsInstalled()));
+joal.on(EVENT_JOAL_INSTALLED, () => {
+  store.dispatch(joalIsInstalled());
+  joalHasFinished = true;
+  notifyCloseAllowedIfBothAreFinished();
+});
 joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
-joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => store.dispatch(joalDownloadStarted(size)));
+joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => {
+  store.dispatch(joalDownloadStarted(size));
+  ipcRenderer.send('prevent-close');
+});
 joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(joalDownloadHasprogress(bytes))); // eslint-disable-line max-len
-joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => store.dispatch(joalInstallHasFailed(err)));
+joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => {
+  store.dispatch(joalInstallHasFailed(err));
+  joalHasFinished = true;
+  notifyCloseAllowedIfBothAreFinished();
+});
 joal.installIfNeeded();
