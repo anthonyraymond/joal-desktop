@@ -6,7 +6,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import Root from './components/Root';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
-import JavaInstaller from './java/installer';
+import JavaInstaller from './java/jre';
 import JoalInstaller from './java/joal';
 import {
   EVENT_JRE_INSTALLED,
@@ -14,7 +14,7 @@ import {
   EVENT_JRE_DOWNLOAD_STARTED,
   EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
   EVENT_JRE_INSTALL_FAILED
-} from './java/installer/jreInstallerEvent';
+} from './java/jre/jreInstallerEvent';
 import {
   jreIsInstalled,
   jreWillDownload,
@@ -87,7 +87,6 @@ java.on(EVENT_JRE_INSTALL_FAILED, (err) => {
   jreHasFinished = true;
   notifyCloseAllowedIfBothAreFinished();
 });
-java.installIfRequired();
 
 
 const joal = new JoalInstaller(app);
@@ -107,4 +106,21 @@ joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => {
   joalHasFinished = true;
   notifyCloseAllowedIfBothAreFinished();
 });
-joal.installIfNeeded();
+
+Promise.all([
+  java.installIfRequired(),
+  joal.installIfNeeded()
+])
+  .then(() => { // eslint-disable-line promise/always-return
+    const uiConfig = {
+      host: 'localhost',
+      port: '5081',
+      pathPrefix: 'this-is-secret',
+      secretToken: 'nop'
+    };
+    localStorage.setItem('guiConfig', JSON.stringify(uiConfig));
+    ipcRenderer.send('start-joal', uiConfig);
+  })
+  .catch(() => {
+    console.error('Failed to install dependencies...');
+  });

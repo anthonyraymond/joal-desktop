@@ -1,4 +1,5 @@
 // @flow
+/* eslint-disable no-underscore-dangle */
 /* MIT License
  *
  * Copyright (c) 2016 schreiben, modified by anthony (allow install on runtime)
@@ -66,7 +67,7 @@ const url = () => (
   `https://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${platform()}-${arch()}.tar.gz`
 );
 
-class JavaInstaller extends events.EventEmitter {
+class Jre extends events.EventEmitter {
   constructor(app) {
     // we can't import app here, because it change if called from main or renderer process
     //  so we get it as an argument
@@ -89,7 +90,7 @@ class JavaInstaller extends events.EventEmitter {
       default: throw new Error(`unsupported platform: ${systemPlatform}`);
     }
 
-    const jreDirs = JavaInstaller.getDirectories(self.jreDir);
+    const jreDirs = Jre.getDirectories(self.jreDir);
     if (jreDirs.length < 1) throw new Error('no jre found');
     const d = driver.slice();
     d.unshift(jreDirs[0]);
@@ -108,6 +109,11 @@ class JavaInstaller extends events.EventEmitter {
     return childProcess.spawnSync(self.driver(), ['-version'], { encoding: 'utf8' });
   }
 
+  spawn(args) {
+    const self = this;
+    return childProcess.spawn(self.driver(), args, { encoding: 'utf8' });
+  }
+
   isJavaInstalled() {
     const self = this;
     const javaResponse = childProcess.spawnSync(
@@ -119,30 +125,36 @@ class JavaInstaller extends events.EventEmitter {
     return javaResponse.stderr && javaResponse.stderr.startsWith(`java version "${javaVestionString}"`);
   }
 
+  async _cleanJreFolder() {
+    const self = this;
+    await rmdir(self.jreDir);
+  }
+
   async installIfRequired() {
     const self = this;
+    return new Promise((resolve, reject) => {
+      try {
+        if (self.isJavaInstalled()) {
+          self.emit(EVENT_JRE_INSTALLED);
+          resolve();
+          return;
+        }
+      } catch (err) {
+        // Will fail if java is missing, handling all cases are a pain in the ass, better catch ex
+        // If java is not installed skip this and install.
+      }
 
-    try {
-      if (self.isJavaInstalled()) {
-        self.emit(EVENT_JRE_INSTALLED);
+      self.emit(EVENT_JRE_WILL_DOWNLOAD);
+
+      try {
+        self._cleanJreFolder();
+      } catch (err) {
+        self.emit(EVENT_JRE_INSTALL_FAILED, `An error occured while removing JRE folder before install: ${err.message}`);
+        reject();
         return;
       }
-    } catch (err) {
-      // Will fail if java is missing, handling all cases are a pain in the ass, better catch ex
-      // If java is not installed skip this and install.
-    }
 
-    self.emit(EVENT_JRE_WILL_DOWNLOAD);
-
-    try {
-      await rmdir(self.jreDir);
-    } catch (err) {
-      self.emit(EVENT_JRE_INSTALL_FAILED, `An error occured while removing JRE folder before install: ${err.message}`);
-      return;
-    }
-
-    request
-      .get({
+      request.get({
         url: url(),
         rejectUnauthorized: false,
         agent: false,
@@ -169,19 +181,28 @@ class JavaInstaller extends events.EventEmitter {
       })
       .on('error', err => {
         self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
-        rmdir(self.jreDir);
+        self._cleanJreFolder();
+        reject();
       })
       .pipe(zlib.createUnzip())
       .pipe(tar.extract(self.jreDir))
       .on('finish', () => {
         try {
-          if (self.isJavaInstalled()) self.emit(EVENT_JRE_INSTALLED);
-          else self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+          if (self.isJavaInstalled()) {
+            self.emit(EVENT_JRE_INSTALLED);
+            resolve();
+          } else {
+            self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+            reject();
+          }
         } catch (err) {
           self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', err.message);
+          self._cleanJreFolder();
+          reject();
         }
       });
+    });
   }
 }
 
-export default JavaInstaller;
+export default Jre;

@@ -12,6 +12,7 @@
  */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import MenuBuilder from './menu';
+import Jre from './java/jre';
 
 let mainWindow = null;
 
@@ -40,9 +41,38 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+/* Java and Joal ipc handler */
+const checkUrlExists = (host,cb) => {
+    http.request({method:'HEAD',host,port:80,path: '/'}, (r) => {
+        cb(null, r.statusCode > 200 && r.statusCode < 400 );
+    }).on('error', cb).end();
+}
 let isCloseAllowed = true;
 ipcMain.on('prevent-close', () => { isCloseAllowed = false; });
 ipcMain.on('allow-close', () => { isCloseAllowed = true; });
+ipcMain.on('start-joal', (sender, uiConfig) => {
+  const joalProcess = new Jre(app).spawn([
+    '-jar',
+    app.getPath('userData') + '/' + 'joal-core/jack-of-all-trades-2.0.0-SNAPSHOT.jar',
+    '--joal-conf=' + app.getPath('userData') + '/' + 'joal-core/',
+    '--spring.main.web-environment=true',
+    `--server.port=${uiConfig.port}`,
+    `--joal.ui.path.prefix=${uiConfig.pathPrefix}`,
+    `--joal.ui.secret-token=${uiConfig.secretToken}`,
+  ]);
+  joalProcess.stdout.on('data', (data) => {
+    console.log(`stdout: ${data}`);
+  });
+  joalProcess.stderr.on('data', (data) => {
+    console.log(`stderr: ${data}`);
+  });
+
+  // set the localtorage configuration before dom render
+  mainWindow.webContents.on('did-get-response-details', () => {
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`);
+  });
+  setTimeout(() => mainWindow.loadURL(`http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui`), 9000);
+});
 
 /**
  * Add event listeners...
