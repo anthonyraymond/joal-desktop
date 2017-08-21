@@ -32,18 +32,21 @@ export default class JoalUpdater extends events.EventEmitter {
     self.archivedTorrentsDir = path.join(self.torrentsDir, 'archived');
     self.joalCoreVersionFile = path.join(self.joalDir, '.joal-core');
     self.joalCoreVersion = '1.0.3';
+    self.jarName = 'jack-of-all-trades-2.0.0-SNAPSHOT.jar';
     self.downloadUrl = `https://github.com/anthonyraymond/joal/releases/download/${self.joalCoreVersion}/test-do-not-download.tar.gz`;
+  }
+
+  getJoalJarName() {
+    return this.jarName;
   }
 
   _isLocalInstalled() {
     const self = this;
 
-    // check for jar
+    // check for joal directory
     if (!fs.existsSync(self.joalDir)) return false;
-    const isJarPresent = fs.readdirSync(self.joalDir).filter(fileName =>
-      fileName.endsWith('.jar')
-    ).length > 0;
-    if (!isJarPresent) return false;
+    // check for jar
+    if (!fs.existsSync(path.join(self.joalDir, self.jarName))) return false;
 
     // check for client files
     if (!fs.existsSync(self.clientFilesDir)) return false;

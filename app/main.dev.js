@@ -109,8 +109,8 @@ const checkUrlExists = (host,cb) => {
 const startJoal = (uiConfig) => {
   const joalProcess = new Jre(app).spawn([
     '-jar',
-    app.getPath('userData') + '/' + 'joal-core/jack-of-all-trades-2.0.0-SNAPSHOT.jar',
-    '--joal-conf=' + app.getPath('userData') + '/' + 'joal-core/',
+    `${app.getPath('userData')}/joal-core/${joal.getJoalJarName()}`,
+    `--joal-conf=${app.getPath('userData')}/joal-core/`,
     '--spring.main.web-environment=true',
     `--server.port=${uiConfig.port}`,
     `--joal.ui.path.prefix=${uiConfig.pathPrefix}`,
