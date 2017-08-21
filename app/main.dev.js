@@ -56,6 +56,13 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+const uuidv4 = () => (
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0; // eslint-disable-line no-bitwise
+    const v = c === 'x' ? r : (r & 0x3 | 0x8); // eslint-disable-line no-mixed-operators, no-bitwise
+    return v.toString(16);
+  })
+);
 
 const jre = new Jre(app);
 const joal = new Joal(app);
@@ -83,8 +90,8 @@ ipcMain.on('install-dependencies', (event) => {
       const uiConfig = {
         host: 'localhost',
         port: '5081',
-        pathPrefix: 'this-is-secret',
-        secretToken: 'nop'
+        pathPrefix: uuidv4(),
+        secretToken: uuidv4()
       };
       startJoal(uiConfig);
     })
