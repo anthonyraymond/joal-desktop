@@ -11,6 +11,7 @@
  * @flow
  */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import waitForUrl from 'wait-for-url';
 import MenuBuilder from './menu';
 import Jre from './java/jre';
 import Joal from './java/joal';
@@ -101,11 +102,6 @@ ipcMain.on('install-dependencies', (event) => {
 });
 
 
-const checkUrlExists = (host,cb) => {
-    http.request({method:'HEAD',host,port:80,path: '/'}, (r) => { // TODO: replace address
-      cb(null, r.statusCode > 200 && r.statusCode < 400);
-    }).on('error', cb).end();
-};
 const startJoal = (uiConfig) => {
   const joalProcess = new Jre(app).spawn([
     '-jar',
@@ -127,7 +123,17 @@ const startJoal = (uiConfig) => {
   mainWindow.webContents.on('did-get-response-details', () => {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`);
   });
-  setTimeout(() => mainWindow.loadURL(`http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui`), 9000);
+  const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui`;
+  waitForUrl(uiUrl, {
+    attempts: 40, // attempts before failing
+    method: 'GET',
+    timeout: 60000, // threshold before request timeout
+    replayDelay: 500, // time before retrying
+  })
+    .done(() => mainWindow.loadURL(uiUrl))
+    .catch((error) => {
+      console.error('Joal seems not to be started, we have failed to reach ui url.', error);
+    });
 };
 
 

@@ -7386,7 +7386,7 @@ request-promise-native@^1.0.3:
     stealthy-require "^1.1.0"
     tough-cookie ">=2.3.0"
 
-request@2, request@^2.45.0, request@^2.65.0, request@^2.69.0, request@^2.75.0, request@^2.79.0, request@^2.81.0, request@~2.81.0:
+request@2, request@^2.45.0, request@^2.51.0, request@^2.65.0, request@^2.69.0, request@^2.75.0, request@^2.79.0, request@^2.81.0, request@~2.81.0:
   version "2.81.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.81.0.tgz#c6928946a0e06c5f8d6f8a9333469ffda46298a0"
   dependencies:
@@ -8766,6 +8766,12 @@ vm-browserify@0.0.4:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-0.0.4.tgz#5d7ea45bbef9e4a6ff65f95438e0a87c357d5a73"
   dependencies:
     indexof "0.0.1"
+
+wait-for-url@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/wait-for-url/-/wait-for-url-0.0.3.tgz#251bd300d5cd1f18093eb075d306a054028bff14"
+  dependencies:
+    request "^2.51.0"
 
 walkdir@^0.0.11:
   version "0.0.11"
