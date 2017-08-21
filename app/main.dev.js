@@ -137,9 +137,6 @@ const startJoal = (uiConfig) => {
 };
 
 
-/* Java and Joal ipc handler */
-
-
 /**
  * Add event listeners...
  */
