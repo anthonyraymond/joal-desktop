@@ -62,65 +62,18 @@ if (module.hot) {
   });
 }
 
-const { app } = remote;
-let jreHasFinished = false;
-let joalHasFinished = false;
-const notifyCloseAllowedIfBothAreFinished = () => {
-  if (!jreHasFinished || !joalHasFinished) return;
-  ipcRenderer.send('allow-close');
-};
 
-const java = new JavaInstaller(app);
-java.on(EVENT_JRE_INSTALLED, () => {
-  store.dispatch(jreIsInstalled());
-  jreHasFinished = true;
-  notifyCloseAllowedIfBothAreFinished();
-});
-java.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
-java.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => {
-  store.dispatch(jreDownloadStarted(size));
-  ipcRenderer.send('prevent-close');
-});
-java.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(jreDownloadHasprogress(bytes))); // eslint-disable-line max-len
-java.on(EVENT_JRE_INSTALL_FAILED, (err) => {
-  store.dispatch(jreDownloadHasFailed(err));
-  jreHasFinished = true;
-  notifyCloseAllowedIfBothAreFinished();
-});
+ipcRenderer.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
+ipcRenderer.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
+ipcRenderer.on(EVENT_JRE_DOWNLOAD_STARTED, (event, size) => store.dispatch(jreDownloadStarted(size))); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (event, bytes) => store.dispatch(jreDownloadHasprogress(bytes))); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_JRE_INSTALL_FAILED, (event, err) => store.dispatch(jreDownloadHasFailed(err))); // eslint-disable-line max-len
+
+ipcRenderer.on(EVENT_JOAL_INSTALLED, () => store.dispatch(joalIsInstalled()));
+ipcRenderer.on(EVENT_JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
+ipcRenderer.on(EVENT_JOAL_DOWNLOAD_STARTED, (event, size) => store.dispatch(joalDownloadStarted(size))); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (event, bytes) => store.dispatch(joalDownloadHasprogress(bytes))); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_JOAL_INSTALL_FAILED, (event, err) => store.dispatch(joalInstallHasFailed(err))); // eslint-disable-line max-len
 
 
-const joal = new JoalInstaller(app);
-joal.on(EVENT_JOAL_INSTALLED, () => {
-  store.dispatch(joalIsInstalled());
-  joalHasFinished = true;
-  notifyCloseAllowedIfBothAreFinished();
-});
-joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
-joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => {
-  store.dispatch(joalDownloadStarted(size));
-  ipcRenderer.send('prevent-close');
-});
-joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => store.dispatch(joalDownloadHasprogress(bytes))); // eslint-disable-line max-len
-joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => {
-  store.dispatch(joalInstallHasFailed(err));
-  joalHasFinished = true;
-  notifyCloseAllowedIfBothAreFinished();
-});
-
-Promise.all([
-  java.installIfRequired(),
-  joal.installIfNeeded()
-])
-  .then(() => { // eslint-disable-line promise/always-return
-    const uiConfig = {
-      host: 'localhost',
-      port: '5081',
-      pathPrefix: 'this-is-secret',
-      secretToken: 'nop'
-    };
-    localStorage.setItem('guiConfig', JSON.stringify(uiConfig));
-    ipcRenderer.send('start-joal', uiConfig);
-  })
-  .catch(() => {
-    console.error('Failed to install dependencies...');
-  });
+ipcRenderer.send('install-dependencies');

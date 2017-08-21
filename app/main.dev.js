@@ -13,6 +13,21 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import MenuBuilder from './menu';
 import Jre from './java/jre';
+import Joal from './java/joal';
+import {
+  EVENT_JRE_INSTALLED,
+  EVENT_JRE_WILL_DOWNLOAD,
+  EVENT_JRE_DOWNLOAD_STARTED,
+  EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JRE_INSTALL_FAILED
+} from './java/jre/jreInstallerEvent';
+import {
+  EVENT_JOAL_INSTALLED,
+  EVENT_JOAL_WILL_DOWNLOAD,
+  EVENT_JOAL_DOWNLOAD_STARTED,
+  EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JOAL_INSTALL_FAILED
+} from './java/joal/joalInstallerEvents';
 
 let mainWindow = null;
 
@@ -41,16 +56,50 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
-/* Java and Joal ipc handler */
+
+const jre = new Jre(app);
+const joal = new Joal(app);
+let isJreInstallFinished = false;
+let isJoalInstallFinished = false;
+
+
+ipcMain.on('install-dependencies', (event) => {
+  jre.on(EVENT_JRE_INSTALLED, () => { event.sender.send(EVENT_JRE_INSTALLED); isJreInstallFinished = true; }); // eslint-disable-line max-len
+  jre.on(EVENT_JRE_WILL_DOWNLOAD, () => event.sender.send(EVENT_JRE_WILL_DOWNLOAD));
+  jre.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JRE_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
+  jre.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
+  jre.on(EVENT_JRE_INSTALL_FAILED, (err) => { event.sender.send(EVENT_JRE_INSTALL_FAILED, err); isJreInstallFinished = true; }); // eslint-disable-line max-len
+
+  joal.on(EVENT_JOAL_INSTALLED, () => { event.sender.send(EVENT_JOAL_INSTALLED); isJoalInstallFinished = true; }); // eslint-disable-line max-len
+  joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => event.sender.send(EVENT_JOAL_WILL_DOWNLOAD));
+  joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JOAL_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
+  joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
+  joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => { event.sender.send(EVENT_JOAL_INSTALL_FAILED, err); isJoalInstallFinished = true; }); // eslint-disable-line max-len
+  Promise.all([
+    jre.installIfRequired(),
+    joal.installIfNeeded()
+  ])
+    .then(() => { // eslint-disable-line promise/always-return
+      const uiConfig = {
+        host: 'localhost',
+        port: '5081',
+        pathPrefix: 'this-is-secret',
+        secretToken: 'nop'
+      };
+      startJoal(uiConfig);
+    })
+    .catch((err) => {
+      console.error('Failed to install dependencies...', err);
+    });
+});
+
+
 const checkUrlExists = (host,cb) => {
-    http.request({method:'HEAD',host,port:80,path: '/'}, (r) => {
-        cb(null, r.statusCode > 200 && r.statusCode < 400 );
+    http.request({method:'HEAD',host,port:80,path: '/'}, (r) => { // TODO: replace address
+      cb(null, r.statusCode > 200 && r.statusCode < 400);
     }).on('error', cb).end();
-}
-let isCloseAllowed = true;
-ipcMain.on('prevent-close', () => { isCloseAllowed = false; });
-ipcMain.on('allow-close', () => { isCloseAllowed = true; });
-ipcMain.on('start-joal', (sender, uiConfig) => {
+};
+const startJoal = (uiConfig) => {
   const joalProcess = new Jre(app).spawn([
     '-jar',
     app.getPath('userData') + '/' + 'joal-core/jack-of-all-trades-2.0.0-SNAPSHOT.jar',
@@ -72,7 +121,11 @@ ipcMain.on('start-joal', (sender, uiConfig) => {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`);
   });
   setTimeout(() => mainWindow.loadURL(`http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui`), 9000);
-});
+};
+
+
+/* Java and Joal ipc handler */
+
 
 /**
  * Add event listeners...
@@ -109,7 +162,7 @@ app.on('ready', async () => {
 
   // Prevent Closing when download is running
   mainWindow.on('close', (e) => {
-    if (isCloseAllowed) return;
+    if (isJreInstallFinished && isJoalInstallFinished) return;
     const pressedButton = dialog.showMessageBox(mainWindow, {
       type: 'question',
       title: 'Wait !',
