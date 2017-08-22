@@ -111,6 +111,7 @@ const startJoal = (uiConfig) => {
     `--server.port=${uiConfig.port}`,
     `--joal.ui.path.prefix=${uiConfig.pathPrefix}`,
     `--joal.ui.secret-token=${uiConfig.secretToken}`,
+    '--server.address=localhost'
   ]);
   joalProcess.stdout.on('data', (data) => {
     console.log(`stdout: ${data}`);
