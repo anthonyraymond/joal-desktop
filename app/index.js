@@ -1,4 +1,4 @@
-import { remote, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
@@ -6,8 +6,6 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import Root from './components/Root';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
-import JavaInstaller from './java/jre';
-import JoalInstaller from './java/joal';
 import {
   EVENT_JRE_INSTALLED,
   EVENT_JRE_WILL_DOWNLOAD,
