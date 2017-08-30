@@ -18,7 +18,7 @@
     "package": "npm run build && build --publish never",
     "package-all": "npm run build && build -mwl",
     "package-linux": "npm run build && build --linux",
-    "package-win": "npm run build && build --win --x64",
+    "package-win": "npm run build && build --win --x64 --ia32",
     "postinstall": "concurrently \"npm run flow-typed\" \"npm run build-dll\" \"electron-builder install-app-deps\" \"node node_modules/fbjs-scripts/node/check-dev-engines.js package.json\"",
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=production electron ./app/",
@@ -32,6 +32,7 @@
   "browserslist": "electron 1.6",
   "build": {
     "productName": "JoalDesktop",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "appId": "org.araymond.joal.desktop",
     "files": [
       "dist/",
