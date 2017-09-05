@@ -1,10 +1,17 @@
-sudo: false
+sudo: required
+dist: trusty
 
 language: node_js
 
 node_js:
   - 8
-  - 7
+
+matrix:
+  include:
+    - os: osx
+    - os: linux
+      env: CC=clang CXX=clang++ npm_config_clang=1
+      compiler: clang
 
 cache:
   yarn: true
@@ -35,8 +42,4 @@ before_script:
   - sleep 3
 
 script:
-  - node --version
-  - yarn lint
-  - yarn package
-  - yarn test
-  - yarn test-e2e
+  - yarn dist
