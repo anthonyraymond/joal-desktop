@@ -1,9 +1,10 @@
 os: unstable
 
 environment:
+  GH_TOKEN:
+    secure: NuR1Pg/kiQENELxE4St2Y155NCtUa75EBKeyNTVL7U+vCRa0Oui32XI00jXTEY/J
   matrix:
     - nodejs_version: 8
-    - nodejs_version: 7
 
 cache:
   - "%LOCALAPPDATA%/Yarn"
@@ -28,8 +29,4 @@ install:
   - cd app && yarn
 
 test_script:
-  - node --version
-  - yarn lint
-  - yarn package
-  - yarn test
-  - yarn test-e2e
+  - yarn dist
