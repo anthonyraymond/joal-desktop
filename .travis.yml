@@ -27,14 +27,17 @@ addons:
       - g++-4.8
       - icnsutils
       - graphicsmagick
+      - libgnome-keyring-dev
       - xz-utils
       - xorriso
+      - xvfb
 
 install:
   - export CXX="g++-4.8"
-  - yarn
+  - travis_wait yarn
   - cd app && yarn && cd ..
-  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x16"
+  - export DISPLAY=':99.0'
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
 before_script:
   - export DISPLAY=:99.0

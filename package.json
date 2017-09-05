@@ -44,6 +44,7 @@
       "package.json"
     ],
     "dmg": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "contents": [
         {
           "x": 130,
@@ -62,11 +63,17 @@
         "nsis"
       ]
     },
+    "nsis": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    },
     "linux": {
       "target": [
         "deb",
         "AppImage"
       ]
+    },
+    "appImage": {
+        "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "directories": {
       "buildResources": "resources",
