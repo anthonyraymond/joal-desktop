@@ -1,48 +1,40 @@
-sudo: required
+osx_image: xcode8.3
+
 dist: trusty
+sudo: false
 
 language: node_js
+node_js: "8"
 
-node_js:
-  - 8
+env:
+  global:
+    - ELECTRON_CACHE=$HOME/.cache/electron
+    - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
 
-matrix:
-  include:
-    - os: osx
-    - os: linux
-      env: CC=clang CXX=clang++ npm_config_clang=1
-      compiler: clang
+os:
+  - linux
+  - osx
 
 cache:
-  yarn: true
   directories:
-    - node_modules
-    - app/node_modules
+  - node_modules
+  - app/node_modules
+  - $HOME/.cache/electron
+  - $HOME/.cache/electron-builder
+  - $HOME/.npm/_prebuilds
 
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.8
-      - icnsutils
-      - graphicsmagick
-      - libgnome-keyring-dev
-      - xz-utils
-      - xorriso
-      - xvfb
+before_install:
+  - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.2.0/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.2.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
+  - curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv dist $HOME/.yarn
+  - export PATH="$HOME/.yarn/bin:$PATH"
 
 install:
-  - export CXX="g++-4.8"
   - travis_wait yarn
   - cd app && yarn && cd ..
-  - export DISPLAY=':99.0'
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-
-before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start &
-  - sleep 3
 
 script:
-  - yarn dist
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then yarn dist; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then yarn dist -- --mac; fi
+
+before_cache:
+  - rm -rf $HOME/.cache/electron-builder/wine
