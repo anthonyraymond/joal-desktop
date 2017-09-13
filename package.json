@@ -33,6 +33,11 @@
   },
   "browserslist": "electron 1.6",
   "build": {
+    "publish": [{
+      "provider": "github",
+      "owner": "anthonyraymond",
+      "repo": "joal-desktop"
+    }],
     "productName": "JoalDesktop",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "appId": "org.araymond.joal.desktop",
