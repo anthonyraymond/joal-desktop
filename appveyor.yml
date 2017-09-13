@@ -1,8 +1,6 @@
 platform: x64
 
 environment:
-  GH_TOKEN:
-    secure: NuR1Pg/kiQENELxE4St2Y155NCtUa75EBKeyNTVL7U+vCRa0Oui32XI00jXTEY/J
   matrix:
     - nodejs_version: 8
 
