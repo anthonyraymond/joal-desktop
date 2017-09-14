@@ -1,6 +1,10 @@
 // @flow
 import React from 'react';
 import LinearProgress from 'material-ui/LinearProgress';
+import CheckIcon from 'material-ui/svg-icons/action/check-circle';
+import WorkingIcon from 'material-ui/svg-icons/action/cached';
+import ErrorIcon from 'material-ui/svg-icons/alert/error';
+import { lightGreen500, red500 } from 'material-ui/styles/colors';
 import filesize from 'filesize';
 import styles from './style.css';
 
@@ -13,25 +17,35 @@ type Props = {
 
 const Joal = (props: Props) => {
   const { progressCurrentValue, progressMaxValue, error, hasCompleted } = props;
+
+  let icon = <WorkingIcon className={`${styles.icon} ${styles.iconWorking}`} />;
+  if (error) {
+    icon = <ErrorIcon className={styles.icon} color={red500} />;
+  } else if (hasCompleted) {
+    icon = <CheckIcon className={styles.icon} color={lightGreen500} />;
+  }
+
   return (
-    <div className={styles.progressWrapper}>
-      { !error &&
-        <div>
-          <LinearProgress
-            mode="determinate"
-            max={progressMaxValue}
-            value={progressCurrentValue}
-          />
-        </div>
-      }
-      { !hasCompleted && progressCurrentValue !== 0 &&
-        <div className={styles.textProgress}>
-          {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
-        </div>
-      }
-      { error &&
-        <div>{error}</div>
-      }
+    <div style={{ position: 'relative' }}>
+      {icon}
+      <h3 className={styles.title}>Joal-core</h3>
+      <div className={styles.progressWrapper}>
+        { !error &&
+          <div>
+            <LinearProgress
+              mode="determinate"
+              max={progressMaxValue}
+              value={progressCurrentValue}
+            />
+          </div>
+        }
+        { !hasCompleted && progressCurrentValue !== 0 &&
+          <div className={styles.textProgress}>
+            {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
+          </div>
+        }
+        { error && <div>{error}</div> }
+      </div>
     </div>
   );
 };
