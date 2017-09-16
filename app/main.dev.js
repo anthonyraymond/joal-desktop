@@ -92,15 +92,16 @@ ipcMain.on('renderer-ready', (event) => {
   autoUpdater.on('checking-for-update', () => event.sender.send(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE));
   autoUpdater.on('update-available', () => {});
   autoUpdater.on('update-not-available', () => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALLED); installJoalAndJre(event); }); // eslint-disable-line max-len
-  autoUpdater.on('error', () => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, 'Error while checking for app updates.'); installJoalAndJre(event); }); // eslint-disable-line max-len
+  autoUpdater.on('error', (err) => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, 'Error while checking for app updates.'); console.log(err); installJoalAndJre(event); }); // eslint-disable-line max-len
   autoUpdater.on('download-progress', (progressObj) => event.sender.send(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, progressObj)); // eslint-disable-line max-len
   autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
 
-  if (process.env.NODE_ENV !== 'development') {
-    autoUpdater.checkForUpdates();
-  } else {
-    installJoalAndJre(event);
-  }
+  autoUpdater.checkForUpdates();
+  // if (process.env.NODE_ENV !== 'development') {
+  //   autoUpdater.checkForUpdates();
+  // } else {
+  //   installJoalAndJre(event);
+  // }
 });
 
 const installJoalAndJre = (event) => {
