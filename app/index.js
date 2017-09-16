@@ -69,11 +69,11 @@ if (module.hot) {
 }
 
 ipcRenderer.on(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE, () => store.dispatch(electronUpdaterCheckingForUpdate())); // eslint-disable-line max-len
-ipcRenderer.on(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, (progressObj) =>
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, (event, progressObj) =>
   store.dispatch(electronUpdaterDownloadHasprogress(progressObj.transferred, progressObj.total))
 );
 ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALLED, () => store.dispatch(electronUpdaterIsInstalled())); // eslint-disable-line max-len
-ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, (err) => store.dispatch(electronUpdaterInstallHasFailed(err.message))); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, (event, err) => store.dispatch(electronUpdaterInstallHasFailed(err))); // eslint-disable-line max-len
 
 ipcRenderer.on(EVENT_JRE_CHECK_FOR_UPDATES, () => store.dispatch(jreCheckingForUpdate()));
 ipcRenderer.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (event, bytes, totalSize) => store.dispatch(jreDownloadHasprogress(bytes, totalSize))); // eslint-disable-line max-len
