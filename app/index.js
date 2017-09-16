@@ -7,6 +7,18 @@ import Root from './components/Root';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
 import {
+  EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE,
+  EVENT_ELECTRON_UPDATER_INSTALLED,
+  EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_ELECTRON_UPDATER_INSTALL_FAILED
+} from './java/electronUpdater/electronUpdaterEvents';
+import {
+  electronUpdaterCheckingForUpdate,
+  electronUpdaterDownloadHasprogress,
+  electronUpdaterIsInstalled,
+  electronUpdaterInstallHasFailed
+} from './components/initializeStatus/electronUpdater/electronUpdater.actions';
+import {
   EVENT_JRE_INSTALLED,
   EVENT_JRE_WILL_DOWNLOAD,
   EVENT_JRE_DOWNLOAD_STARTED,
@@ -60,6 +72,12 @@ if (module.hot) {
   });
 }
 
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE, () => store.dispatch(electronUpdaterCheckingForUpdate())); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, (progressObj) =>
+  store.dispatch(electronUpdaterDownloadHasprogress(progressObj.transferred, progressObj.total))
+);
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALLED, () => store.dispatch(electronUpdaterIsInstalled())); // eslint-disable-line max-len
+ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, (err) => store.dispatch(electronUpdaterInstallHasFailed(err.message))); // eslint-disable-line max-len
 
 ipcRenderer.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
 ipcRenderer.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
@@ -74,4 +92,4 @@ ipcRenderer.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (event, bytes) => store.dispa
 ipcRenderer.on(EVENT_JOAL_INSTALL_FAILED, (event, err) => store.dispatch(joalInstallHasFailed(err))); // eslint-disable-line max-len
 
 
-ipcRenderer.send('install-dependencies');
+ipcRenderer.send('renderer-ready');

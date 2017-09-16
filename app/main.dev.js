@@ -12,9 +12,18 @@
  */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import waitForUrl from 'wait-for-url';
+import log from 'electron-log';
+import { autoUpdater } from 'electron-updater';
 import MenuBuilder from './menu';
 import Jre from './java/jre';
 import Joal from './java/joal';
+import {
+  EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE,
+  EVENT_ELECTRON_UPDATER_INSTALLED,
+  EVENT_ELECTRON_UPDATER_WILL_DOWNLOAD,
+  EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_ELECTRON_UPDATER_INSTALL_FAILED
+} from './java/electronUpdater/electronUpdaterEvents';
 import {
   EVENT_JRE_INSTALLED,
   EVENT_JRE_WILL_DOWNLOAD,
@@ -57,6 +66,12 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+/**
+ * auto updater
+ */
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+
 const uuidv4 = () => (
   'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0; // eslint-disable-line no-bitwise
@@ -67,27 +82,42 @@ const uuidv4 = () => (
 
 const jre = new Jre(app);
 const joal = new Joal(app);
-let isJreInstallFinished = false;
-let isJoalInstallFinished = false;
+let isJoalAndJreInstallFinish = false;
 
+ipcMain.on('renderer-ready', (event) => {
+  autoUpdater.on('checking-for-update', () => event.sender.send(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE));
+  autoUpdater.on('update-available', () => {});
+  autoUpdater.on('update-not-available', () => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALLED); installJoalAndJre(event); }); // eslint-disable-line max-len
+  autoUpdater.on('error', (err) => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, err); installJoalAndJre(event); }); // eslint-disable-line max-len
+  autoUpdater.on('download-progress', (progressObj) => event.sender.send(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, progressObj)); // eslint-disable-line max-len
+  autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
 
-ipcMain.on('install-dependencies', (event) => {
-  jre.on(EVENT_JRE_INSTALLED, () => { event.sender.send(EVENT_JRE_INSTALLED); isJreInstallFinished = true; }); // eslint-disable-line max-len
+  if (process.env.NODE_ENV !== 'development') {
+    autoUpdater.checkForUpdates();
+  } else {
+    installJoalAndJre(event);
+  }
+});
+
+const installJoalAndJre = (event) => {
+  jre.on(EVENT_JRE_INSTALLED, () => event.sender.send(EVENT_JRE_INSTALLED));
   jre.on(EVENT_JRE_WILL_DOWNLOAD, () => event.sender.send(EVENT_JRE_WILL_DOWNLOAD));
   jre.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JRE_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
   jre.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
-  jre.on(EVENT_JRE_INSTALL_FAILED, (err) => { event.sender.send(EVENT_JRE_INSTALL_FAILED, err); isJreInstallFinished = true; }); // eslint-disable-line max-len
+  jre.on(EVENT_JRE_INSTALL_FAILED, (err) => event.sender.send(EVENT_JRE_INSTALL_FAILED, err));
 
-  joal.on(EVENT_JOAL_INSTALLED, () => { event.sender.send(EVENT_JOAL_INSTALLED); isJoalInstallFinished = true; }); // eslint-disable-line max-len
+  joal.on(EVENT_JOAL_INSTALLED, () => event.sender.send(EVENT_JOAL_INSTALLED));
   joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => event.sender.send(EVENT_JOAL_WILL_DOWNLOAD));
   joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JOAL_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
   joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
-  joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => { event.sender.send(EVENT_JOAL_INSTALL_FAILED, err); isJoalInstallFinished = true; }); // eslint-disable-line max-len
+  joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => event.sender.send(EVENT_JOAL_INSTALL_FAILED, err));
+
   Promise.all([
     jre.installIfRequired(),
     joal.installIfNeeded()
   ])
     .then(() => { // eslint-disable-line promise/always-return
+      isJoalAndJreInstallFinish = true;
       const uiConfig = {
         host: 'localhost',
         port: '5081',
@@ -97,10 +127,10 @@ ipcMain.on('install-dependencies', (event) => {
       startJoal(uiConfig);
     })
     .catch((err) => {
+      isJoalAndJreInstallFinish = true;
       console.error('Failed to install dependencies...', err);
     });
-});
-
+};
 
 const startJoal = (uiConfig) => {
   const joalProcess = new Jre(app).spawn([
@@ -131,7 +161,7 @@ const startJoal = (uiConfig) => {
     timeout: 60000, // threshold before request timeout
     replayDelay: 500, // time before retrying
   })
-    .done(() => mainWindow.loadURL(uiUrl))
+    .then(() => mainWindow.loadURL(uiUrl))
     .catch((error) => {
       console.error('Joal seems not to be started, we have failed to reach ui url.', error);
     });
@@ -173,7 +203,7 @@ app.on('ready', async () => {
 
   // Prevent Closing when download is running
   mainWindow.on('close', (e) => {
-    if (isJreInstallFinished && isJoalInstallFinished) return;
+    if (isJoalAndJreInstallFinish) return;
     const pressedButton = dialog.showMessageBox(mainWindow, {
       type: 'question',
       title: 'Wait !',

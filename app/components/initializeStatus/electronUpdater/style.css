@@ -1,0 +1,40 @@
+.title {
+  margin-left: 25px;
+  margin-bottom: 12px;
+}
+
+.icon {
+  position: absolute;
+  height: 21px!important;
+  width: 21px!important;
+}
+
+.iconWorking {
+  animation-name: ckw;
+  animation-duration: 1.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  transform-origin: 50% 50%;
+  display: inline-block;
+  color: rgba(0, 0, 0, 0.53)!important;
+}
+@keyframes ckw {
+    0% {
+        transform: rotate(360deg);
+    }
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+.progressWrapper {
+  position: relative;
+  padding-left: 25px;
+}
+
+.textProgress {
+  font-size: 14px;
+  position: absolute;
+  right: 0;
+  top: 4px;
+}
