@@ -19,31 +19,27 @@ import {
   electronUpdaterInstallHasFailed
 } from './components/initializeStatus/electronUpdater/electronUpdater.actions';
 import {
-  EVENT_JRE_INSTALLED,
-  EVENT_JRE_WILL_DOWNLOAD,
-  EVENT_JRE_DOWNLOAD_STARTED,
+  EVENT_JRE_CHECK_FOR_UPDATES,
   EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JRE_INSTALLED,
   EVENT_JRE_INSTALL_FAILED
 } from './java/jre/jreInstallerEvent';
 import {
-  jreIsInstalled,
-  jreWillDownload,
-  jreDownloadStarted,
+  jreCheckingForUpdate,
   jreDownloadHasprogress,
+  jreIsInstalled,
   jreDownloadHasFailed
 } from './components/initializeStatus/jre/jre.actions';
 import {
-  EVENT_JOAL_INSTALLED,
-  EVENT_JOAL_WILL_DOWNLOAD,
-  EVENT_JOAL_DOWNLOAD_STARTED,
+  EVENT_JOAL_CHECK_FOR_UPDATES,
   EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JOAL_INSTALLED,
   EVENT_JOAL_INSTALL_FAILED
 } from './java/joal/joalInstallerEvents';
 import {
-  joalIsInstalled,
-  joalWillDownload,
-  joalDownloadStarted,
+  joalCheckingForUpdate,
   joalDownloadHasprogress,
+  joalIsInstalled,
   joalInstallHasFailed
 } from './components/initializeStatus/joal/joal.actions';
 
@@ -79,16 +75,14 @@ ipcRenderer.on(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, (progressObj) =>
 ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALLED, () => store.dispatch(electronUpdaterIsInstalled())); // eslint-disable-line max-len
 ipcRenderer.on(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, (err) => store.dispatch(electronUpdaterInstallHasFailed(err.message))); // eslint-disable-line max-len
 
+ipcRenderer.on(EVENT_JRE_CHECK_FOR_UPDATES, () => store.dispatch(jreCheckingForUpdate()));
+ipcRenderer.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (event, bytes, totalSize) => store.dispatch(jreDownloadHasprogress(bytes, totalSize))); // eslint-disable-line max-len
 ipcRenderer.on(EVENT_JRE_INSTALLED, () => store.dispatch(jreIsInstalled()));
-ipcRenderer.on(EVENT_JRE_WILL_DOWNLOAD, () => store.dispatch(jreWillDownload()));
-ipcRenderer.on(EVENT_JRE_DOWNLOAD_STARTED, (event, size) => store.dispatch(jreDownloadStarted(size))); // eslint-disable-line max-len
-ipcRenderer.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (event, bytes) => store.dispatch(jreDownloadHasprogress(bytes))); // eslint-disable-line max-len
 ipcRenderer.on(EVENT_JRE_INSTALL_FAILED, (event, err) => store.dispatch(jreDownloadHasFailed(err))); // eslint-disable-line max-len
 
+ipcRenderer.on(EVENT_JOAL_CHECK_FOR_UPDATES, () => store.dispatch(joalCheckingForUpdate()));
+ipcRenderer.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (event, bytes, totalSize) => store.dispatch(joalDownloadHasprogress(bytes, totalSize))); // eslint-disable-line max-len
 ipcRenderer.on(EVENT_JOAL_INSTALLED, () => store.dispatch(joalIsInstalled()));
-ipcRenderer.on(EVENT_JOAL_WILL_DOWNLOAD, () => store.dispatch(joalWillDownload()));
-ipcRenderer.on(EVENT_JOAL_DOWNLOAD_STARTED, (event, size) => store.dispatch(joalDownloadStarted(size))); // eslint-disable-line max-len
-ipcRenderer.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (event, bytes) => store.dispatch(joalDownloadHasprogress(bytes))); // eslint-disable-line max-len
 ipcRenderer.on(EVENT_JOAL_INSTALL_FAILED, (event, err) => store.dispatch(joalInstallHasFailed(err))); // eslint-disable-line max-len
 
 

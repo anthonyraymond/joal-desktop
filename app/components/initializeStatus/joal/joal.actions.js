@@ -1,31 +1,23 @@
 // @flow
-export const INSTALLED = '@@joal/install/INSTALLED';
-export const WILL_DOWNLOAD = '@@joal/install/WILL_DOWNLOAD';
-export const DOWNLOAD_STARTED = '@@joal/install/DOWNLOAD_STARTED';
+export const CHECKING_FOR_UPDATES = '@@joal/install/CHECKING_FOR_UPDATES';
 export const DOWNLOAD_HAS_PROGRESSED = '@@joal/install/DOWNLOAD_HAS_PROGRESSED';
+export const INSTALLED = '@@joal/install/INSTALLED';
 export const INSTALL_FAILED = '@@joal/install/INSTALL_FAILED';
 
+export function joalCheckingForUpdate() {
+  return { type: CHECKING_FOR_UPDATES };
+}
+
+export function joalDownloadHasprogress(deltaDownloaded, totalSize) {
+  return {
+    type: DOWNLOAD_HAS_PROGRESSED,
+    deltaDownloaded,
+    totalSize
+  };
+}
 
 export function joalIsInstalled() {
   return { type: INSTALLED };
-}
-
-export function joalWillDownload() {
-  return { type: WILL_DOWNLOAD };
-}
-
-export function joalDownloadStarted(length) {
-  return {
-    type: DOWNLOAD_STARTED,
-    length
-  };
-}
-
-export function joalDownloadHasprogress(deltaDownloaded) {
-  return {
-    type: DOWNLOAD_HAS_PROGRESSED,
-    deltaDownloaded
-  };
 }
 
 export function joalInstallHasFailed(error) {

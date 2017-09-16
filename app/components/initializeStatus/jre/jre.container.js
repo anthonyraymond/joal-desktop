@@ -6,7 +6,8 @@ function mapStateToProps(state) {
     progressMaxValue: state.jre.downloadStats.length,
     progressCurrentValue: state.jre.downloadStats.downloaded,
     error: state.jre.error,
-    hasCompleted: state.jre.hasCompleted
+    hasCompleted: state.jre.hasCompleted,
+    isWorking: state.jre.isWorking
   };
 }
 

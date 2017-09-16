@@ -20,22 +20,19 @@ import Joal from './java/joal';
 import {
   EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE,
   EVENT_ELECTRON_UPDATER_INSTALLED,
-  EVENT_ELECTRON_UPDATER_WILL_DOWNLOAD,
   EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED,
   EVENT_ELECTRON_UPDATER_INSTALL_FAILED
 } from './java/electronUpdater/electronUpdaterEvents';
 import {
-  EVENT_JRE_INSTALLED,
-  EVENT_JRE_WILL_DOWNLOAD,
-  EVENT_JRE_DOWNLOAD_STARTED,
+  EVENT_JRE_CHECK_FOR_UPDATES,
   EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JRE_INSTALLED,
   EVENT_JRE_INSTALL_FAILED
 } from './java/jre/jreInstallerEvent';
 import {
-  EVENT_JOAL_INSTALLED,
-  EVENT_JOAL_WILL_DOWNLOAD,
-  EVENT_JOAL_DOWNLOAD_STARTED,
+  EVENT_JOAL_CHECK_FOR_UPDATES,
   EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JOAL_INSTALLED,
   EVENT_JOAL_INSTALL_FAILED
 } from './java/joal/joalInstallerEvents';
 
@@ -84,7 +81,14 @@ const jre = new Jre(app);
 const joal = new Joal(app);
 let isJoalAndJreInstallFinish = false;
 
+ipcMain.removeAllListeners('renderer-ready');
 ipcMain.on('renderer-ready', (event) => {
+  autoUpdater.removeAllListeners('checking-for-update');
+  autoUpdater.removeAllListeners('update-available');
+  autoUpdater.removeAllListeners('update-not-available');
+  autoUpdater.removeAllListeners('error');
+  autoUpdater.removeAllListeners('download-progres');
+  autoUpdater.removeAllListeners('update-downloaded');
   autoUpdater.on('checking-for-update', () => event.sender.send(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE));
   autoUpdater.on('update-available', () => {});
   autoUpdater.on('update-not-available', () => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALLED); installJoalAndJre(event); }); // eslint-disable-line max-len
@@ -100,16 +104,14 @@ ipcMain.on('renderer-ready', (event) => {
 });
 
 const installJoalAndJre = (event) => {
+  jre.on(EVENT_JRE_CHECK_FOR_UPDATES, () => event.sender.send(EVENT_JRE_CHECK_FOR_UPDATES));
+  jre.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes, totalSize) => event.sender.send(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, bytes, totalSize)); // eslint-disable-line max-len
   jre.on(EVENT_JRE_INSTALLED, () => event.sender.send(EVENT_JRE_INSTALLED));
-  jre.on(EVENT_JRE_WILL_DOWNLOAD, () => event.sender.send(EVENT_JRE_WILL_DOWNLOAD));
-  jre.on(EVENT_JRE_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JRE_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
-  jre.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
   jre.on(EVENT_JRE_INSTALL_FAILED, (err) => event.sender.send(EVENT_JRE_INSTALL_FAILED, err));
 
+  joal.on(EVENT_JOAL_CHECK_FOR_UPDATES, () => event.sender.send(EVENT_JOAL_CHECK_FOR_UPDATES));
+  joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes, totalSize) => event.sender.send(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, bytes, totalSize)); // eslint-disable-line max-len
   joal.on(EVENT_JOAL_INSTALLED, () => event.sender.send(EVENT_JOAL_INSTALLED));
-  joal.on(EVENT_JOAL_WILL_DOWNLOAD, () => event.sender.send(EVENT_JOAL_WILL_DOWNLOAD));
-  joal.on(EVENT_JOAL_DOWNLOAD_STARTED, (size) => event.sender.send(EVENT_JOAL_DOWNLOAD_STARTED, size)); // eslint-disable-line max-len
-  joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes) => event.sender.send(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, bytes)); // eslint-disable-line max-len
   joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => event.sender.send(EVENT_JOAL_INSTALL_FAILED, err));
 
   Promise.all([

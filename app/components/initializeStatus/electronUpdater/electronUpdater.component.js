@@ -43,7 +43,7 @@ const Joal = (props: Props) => {
             />
           </div>
         }
-        { !isWorking && progressCurrentValue !== 0 &&
+        { isWorking && progressCurrentValue !== 0 &&
           <div className={styles.textProgress}>
             {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
           </div>

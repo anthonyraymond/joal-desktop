@@ -1,6 +1,7 @@
 // @flow
 import React from 'react';
 import LinearProgress from 'material-ui/LinearProgress';
+import WaitingIcon from 'material-ui/svg-icons/action/schedule';
 import CheckIcon from 'material-ui/svg-icons/action/check-circle';
 import WorkingIcon from 'material-ui/svg-icons/action/cached';
 import ErrorIcon from 'material-ui/svg-icons/alert/error';
@@ -12,14 +13,17 @@ type Props = {
   progressCurrentValue: number,
   progressMaxValue: number,
   error?: string,
+  isWorking: boolean,
   hasCompleted: boolean
 };
 
 const Jre = (props: Props) => {
-  const { progressCurrentValue, progressMaxValue, error, hasCompleted } = props;
+  const { progressCurrentValue, progressMaxValue, error, hasCompleted, isWorking } = props;
 
-  let icon = <WorkingIcon className={`${styles.icon} ${styles.iconWorking}`} />;
-  if (error) {
+  let icon = <WaitingIcon className={styles.icon} />;
+  if (isWorking) {
+    icon = <WorkingIcon className={`${styles.icon} ${styles.iconWorking}`} />;
+  } else if (error) {
     icon = <ErrorIcon className={styles.icon} color={red500} />;
   } else if (hasCompleted) {
     icon = <CheckIcon className={styles.icon} color={lightGreen500} />;
@@ -39,7 +43,7 @@ const Jre = (props: Props) => {
             />
           </div>
         }
-        { !hasCompleted && progressCurrentValue !== 0 &&
+        { isWorking && progressCurrentValue !== 0 &&
           <div className={styles.textProgress}>
             {`${filesize(progressCurrentValue, { standard: 'iec' })}/${filesize(progressMaxValue, { standard: 'iec' })}`}
           </div>

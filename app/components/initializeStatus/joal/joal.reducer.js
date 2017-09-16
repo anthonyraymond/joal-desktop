@@ -1,51 +1,44 @@
 // @flow
 import update from 'immutability-helper';
 import {
-  INSTALLED,
-  WILL_DOWNLOAD,
-  DOWNLOAD_STARTED,
+  CHECKING_FOR_UPDATES,
   DOWNLOAD_HAS_PROGRESSED,
+  INSTALLED,
   INSTALL_FAILED
 } from './joal.actions';
 
 const initialState = {
-  installed: false,
+  isWorking: false,
   hasCompleted: false,
   error: '',
   downloadStats: {
-    length: 0,
+    length: 100,
     downloaded: 0
   }
 };
 
 export default function counter(state = initialState, action) {
   switch (action.type) {
-    case INSTALLED:
+    case CHECKING_FOR_UPDATES:
       return update(state, {
-        installed: { $set: true },
-        hasCompleted: { $set: true },
-        downloadStats: { length: { $set: 100 }, downloaded: { $set: 100 } }
-      });
-    case WILL_DOWNLOAD:
-      return update(state, {
-        installed: { $set: false },
-        error: { $set: '' }
-      });
-    case DOWNLOAD_STARTED:
-      return update(state, {
-        downloadStats: {
-          length: { $set: action.length },
-          downloaded: { $set: 0 }
-        }
+        isWorking: { $set: true }
       });
     case DOWNLOAD_HAS_PROGRESSED:
       return update(state, {
         downloadStats: {
-          downloaded: { $set: (state.downloadStats.downloaded + action.deltaDownloaded) }
+          downloaded: { $set: (state.downloadStats.downloaded + action.deltaDownloaded) },
+          length: { $set: action.totalSize }
         }
+      });
+    case INSTALLED:
+      return update(state, {
+        isWorking: { $set: false },
+        hasCompleted: { $set: true },
+        downloadStats: { length: { $set: 100 }, downloaded: { $set: 100 } }
       });
     case INSTALL_FAILED:
       return update(state, {
+        isWorking: { $set: false },
         hasCompleted: { $set: true },
         error: { $set: action.error }
       });

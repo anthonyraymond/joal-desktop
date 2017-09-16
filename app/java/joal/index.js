@@ -9,10 +9,9 @@ import mkdir from '../../utils/mkdir';
 import rmdir from '../../utils/rmdir';
 import cp from '../../utils/cp';
 import {
-  EVENT_JOAL_INSTALLED,
-  EVENT_JOAL_WILL_DOWNLOAD,
-  EVENT_JOAL_DOWNLOAD_STARTED,
+  EVENT_JOAL_CHECK_FOR_UPDATES,
   EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JOAL_INSTALLED,
   EVENT_JOAL_INSTALL_FAILED
 } from './joalInstallerEvents';
 
@@ -91,14 +90,14 @@ export default class JoalUpdater extends events.EventEmitter {
   installIfNeeded() {
     const self = this;
 
+    self.emit(EVENT_JOAL_CHECK_FOR_UPDATES);
+
     return new Promise((resolve, reject) => {
       if (self._isLocalInstalled()) {
         self.emit(EVENT_JOAL_INSTALLED);
         resolve();
         return;
       }
-
-      self.emit(EVENT_JOAL_WILL_DOWNLOAD);
 
       try {
         self._cleanJoalFolder();
@@ -119,7 +118,6 @@ export default class JoalUpdater extends events.EventEmitter {
       .on('response', res => {
         // TODO: Si on tombe sur un 404, on arrive ici?
         const len = parseInt(res.headers['content-length'], 10);
-        self.emit(EVENT_JOAL_DOWNLOAD_STARTED, len);
 
         const hundredthOfLength = Math.floor(len / 100);
         let chunkDownloadedSinceLastEmit = 0;
@@ -129,7 +127,7 @@ export default class JoalUpdater extends events.EventEmitter {
           if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
             const downloadedBytes = chunkDownloadedSinceLastEmit;
             chunkDownloadedSinceLastEmit = 0;
-            self.emit(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
+            self.emit(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
           }
         });
       })

@@ -32,10 +32,9 @@ import childProcess from 'child_process';
 import events from 'events';
 import rmdir from '../../utils/rmdir';
 import {
-  EVENT_JRE_INSTALLED,
-  EVENT_JRE_WILL_DOWNLOAD,
-  EVENT_JRE_DOWNLOAD_STARTED,
+  EVENT_JRE_CHECK_FOR_UPDATES,
   EVENT_JRE_DOWNLOAD_HAS_PROGRESSED,
+  EVENT_JRE_INSTALLED,
   EVENT_JRE_INSTALL_FAILED
 } from './jreInstallerEvent';
 
@@ -132,6 +131,9 @@ class Jre extends events.EventEmitter {
 
   async installIfRequired() {
     const self = this;
+
+    self.emit(EVENT_JRE_CHECK_FOR_UPDATES);
+
     return new Promise((resolve, reject) => {
       try {
         if (self.isJavaInstalled()) {
@@ -144,7 +146,6 @@ class Jre extends events.EventEmitter {
         // If java is not installed skip this and install.
       }
 
-      self.emit(EVENT_JRE_WILL_DOWNLOAD);
 
       try {
         self._cleanJreFolder();
@@ -165,7 +166,6 @@ class Jre extends events.EventEmitter {
       })
       .on('response', res => {
         const len = parseInt(res.headers['content-length'], 10);
-        self.emit(EVENT_JRE_DOWNLOAD_STARTED, len);
 
         const hundredthOfLength = Math.floor(len / 100);
         let chunkDownloadedSinceLastEmit = 0;
@@ -175,7 +175,7 @@ class Jre extends events.EventEmitter {
           if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
             const downloadedBytes = chunkDownloadedSinceLastEmit;
             chunkDownloadedSinceLastEmit = 0;
-            self.emit(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes);
+            self.emit(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
           }
         });
       })
