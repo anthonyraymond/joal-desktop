@@ -2,7 +2,7 @@
   "name": "joal-desktop",
   "productName": "JoalDesktop",
   "version": "1.0.0",
-  "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
+  "description": "JOAL Graphical User Interface. A tool to fake your torrent tracker upload.",
   "main": "./main.prod.js",
   "author": {
     "name": "Anthony",
