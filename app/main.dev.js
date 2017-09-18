@@ -14,6 +14,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import waitForUrl from 'wait-for-url';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
+import os from 'os';
 import MenuBuilder from './menu';
 import Jre from './java/jre';
 import Joal from './java/joal';
@@ -92,16 +93,19 @@ ipcMain.on('renderer-ready', (event) => {
   autoUpdater.on('checking-for-update', () => event.sender.send(EVENT_ELECTRON_UPDATER_CHECK_FOR_UPDATE));
   autoUpdater.on('update-available', () => {});
   autoUpdater.on('update-not-available', () => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALLED); installJoalAndJre(event); }); // eslint-disable-line max-len
-  autoUpdater.on('error', (err) => { event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, 'Error while checking for app updates.'); console.log(err); installJoalAndJre(event); }); // eslint-disable-line max-len
+  autoUpdater.on('error', (err) => {
+    const error = err.message === undefined ? 'Error while checking for app updates.' : err.message;
+    event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, error); console.log(err); installJoalAndJre(event); // eslint-disable-line max-len
+  });
   autoUpdater.on('download-progress', (progressObj) => event.sender.send(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, progressObj)); // eslint-disable-line max-len
   autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
 
-  autoUpdater.checkForUpdates();
-  // if (process.env.NODE_ENV !== 'development') {
-  //   autoUpdater.checkForUpdates();
-  // } else {
-  //   installJoalAndJre(event);
-  // }
+  const platform = os.platform();
+  if (platform !== 'darwin' && platform.startsWith('win') === false) {
+    autoUpdater.emit('error', { message: 'Auto-updates are available only for Windows and Mac, please manually check updates at https://github.com/anthonyraymond/joal-desktop/releases' });
+  } else {
+    autoUpdater.checkForUpdates();
+  }
 });
 
 const installJoalAndJre = (event) => {
