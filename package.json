@@ -229,7 +229,7 @@
     "request": "^2.75.0",
     "source-map-support": "^0.4.15",
     "tar-fs": "^1.13.2",
-    "wait-for-url": "^0.0.3"
+    "wait-on": "^2.0.2"
   },
   "devEngines": {
     "node": ">=7.x",

@@ -11,7 +11,7 @@
  * @flow
  */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import waitForUrl from 'wait-for-url';
+import waitOn from 'wait-on';
 import log from 'electron-log';
 import { autoUpdater } from 'electron-updater';
 import os from 'os';
@@ -83,6 +83,7 @@ const uuidv4 = () => (
 const jre = new Jre(app);
 const joal = new Joal(app);
 let isJoalAndJreInstallFinish = false;
+let joalProcess;
 
 ipcMain.removeAllListeners('renderer-ready');
 ipcMain.on('renderer-ready', (event) => {
@@ -142,7 +143,8 @@ const installJoalAndJre = (event) => {
 };
 
 const startJoal = (uiConfig) => {
-  const joalProcess = new Jre(app).spawn([
+  if (joalProcess) { joalProcess.kill('SIGINT'); }
+  joalProcess = new Jre(app).spawn([
     '-jar',
     `${app.getPath('userData')}/joal-core/${joal.getJoalJarName()}`,
     `--joal-conf=${app.getPath('userData')}/joal-core/`,
@@ -164,16 +166,21 @@ const startJoal = (uiConfig) => {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`);
   });
   const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui`;
-  waitForUrl(uiUrl, {
-    attempts: 40, // attempts before failing
-    method: 'GET',
-    timeout: 60000, // threshold before request timeout
-    replayDelay: 500, // time before retrying
-  })
-    .then(() => mainWindow.loadURL(uiUrl))
-    .catch((error) => {
-      console.error('Joal seems not to be started, we have failed to reach ui url.', error);
-    });
+  waitOn({
+    resources: [
+      uiUrl
+    ],
+    delay: 1000, // initial delay in ms, default 0
+    interval: 100, // poll interval in ms, default 250ms
+    timeout: 60000, // timeout in ms, default Infinity
+    window: 200
+  }, (err) => {
+    if (err) {
+      console.error('Joal seems not to be started, we have failed to reach ui url.', err);
+      return;
+    }
+    mainWindow.loadURL(uiUrl);
+  });
 };
 
 
@@ -182,6 +189,9 @@ const startJoal = (uiConfig) => {
  */
 
 app.on('window-all-closed', () => {
+  if (joalProcess) {
+    joalProcess.kill('SIGINT');
+  }
   app.quit();
 });
 
