@@ -88,7 +88,7 @@ export default class MenuBuilder {
     const subMenuHelp = {
       label: 'Help',
       submenu: [
-        { label: 'Github repository', click() { shell.openExternal('http://electron.atom.io'); } }
+        { label: 'Github repository', click() { shell.openExternal('https://github.com/anthonyraymond/joal-desktop'); } }
       ]
     };
 
@@ -125,7 +125,7 @@ export default class MenuBuilder {
     }, {
       label: 'Help',
       submenu: [
-        { label: 'Github repository', click() { shell.openExternal('http://electron.atom.io'); } },
+        { label: 'Github repository', click() { shell.openExternal('https://github.com/anthonyraymond/joal-desktop'); } },
         { label: 'About', click() { MenuBuilder.openAboutWindow(); } }
       ]
     }];
