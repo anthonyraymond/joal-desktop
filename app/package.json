@@ -2,7 +2,7 @@
   "name": "joal-desktop",
   "productName": "JoalDesktop",
   "version": "1.0.2",
-  "description": "JOAL Graphical User Interface. A tool to fake your torrent tracker upload.",
+  "description": "A tool to fake your torrent tracker upload.",
   "main": "./main.prod.js",
   "author": {
     "name": "Anthony",
@@ -12,8 +12,9 @@
   "scripts": {
     "postinstall": "npm rebuild --runtime=electron --target=1.6.6 --disturl=https://atom.io/download/atom-shell --build-from-source"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
+    "about-window": "^1.8.0",
     "rmdir": "^1.2.0"
   }
 }

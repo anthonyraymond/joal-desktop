@@ -2,7 +2,7 @@
   "name": "joal-desktop",
   "productName": "JoalDesktop",
   "version": "0.12.0",
-  "description": "JOAL Graphical User Interface. A tool to fake your torrent tracker upload.",
+  "description": "A tool to fake your torrent tracker upload.",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development node --trace-warnings -r babel-register ./node_modules/webpack/bin/webpack --config webpack.config.renderer.dev.dll.js --colors",
@@ -48,6 +48,7 @@
       "app.html",
       "main.prod.js",
       "main.prod.js.map",
+      "images/about-icon.png",
       "package.json"
     ],
     "mac": {
@@ -104,7 +105,7 @@
     "email": "joal.contact@gmail.com",
     "url": "https://github.com/anthonyraymond"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/anthonyraymond/joal-desktop/issues"
   },
