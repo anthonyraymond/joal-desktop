@@ -13,6 +13,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import waitOn from 'wait-on';
 import log from 'electron-log';
+import treeKill from 'tree-kill';
 import { autoUpdater } from 'electron-updater';
 import os from 'os';
 import MenuBuilder from './menu';
@@ -190,7 +191,7 @@ const startJoal = (uiConfig) => {
 
 app.on('window-all-closed', () => {
   if (joalProcess) {
-    joalProcess.kill('SIGINT');
+    treeKill(joalProcess.pid, 'SIGINT');
   }
   app.quit();
 });

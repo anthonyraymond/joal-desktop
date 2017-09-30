@@ -229,6 +229,7 @@
     "request": "^2.75.0",
     "source-map-support": "^0.4.15",
     "tar-fs": "^1.13.2",
+    "tree-kill": "^1.2.0",
     "wait-on": "^2.0.2"
   },
   "devEngines": {
