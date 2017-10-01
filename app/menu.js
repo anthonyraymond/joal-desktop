@@ -10,11 +10,17 @@ export default class MenuBuilder {
     this.mainWindow = mainWindow;
   }
 
-  static openAboutWindow() {
+  openAboutWindow() {
     aboutWindow({
       icon_path: path.join(__dirname, 'images/about-icon.png'),
       package_json_dir: __dirname,
-      win_options: { alwaysOnTop: true }
+      win_options: {
+        parent: this.mainWindow,
+        alwaysOnTop: true,
+        minimizable: false,
+        maximizable: false,
+        fullscreenable: false
+      }
     });
   }
 
@@ -57,7 +63,7 @@ export default class MenuBuilder {
     const subMenuAbout = {
       label: 'JoalDesktop',
       submenu: [
-        { label: 'About', click() { MenuBuilder.openAboutWindow(); } },
+        { label: 'About', click: () => { this.openAboutWindow(); } },
         { type: 'separator' },
         { label: 'Quit', accelerator: 'Command+Q', click: () => { app.quit(); } }
       ]
@@ -127,7 +133,7 @@ export default class MenuBuilder {
       label: 'Help',
       submenu: [
         { label: 'Github repository', click() { shell.openExternal('https://github.com/anthonyraymond/joal-desktop'); } },
-        { label: 'About', click() { MenuBuilder.openAboutWindow(); } }
+        { label: 'About', click: () => { this.openAboutWindow(); } }
       ]
     }];
 
