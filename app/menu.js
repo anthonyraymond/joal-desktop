@@ -13,7 +13,8 @@ export default class MenuBuilder {
   static openAboutWindow() {
     aboutWindow({
       icon_path: path.join(__dirname, 'images/about-icon.png'),
-      package_json_dir: __dirname
+      package_json_dir: __dirname,
+      win_options: { alwaysOnTop: true }
     });
   }
 
