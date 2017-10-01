@@ -30,7 +30,7 @@
     "test-watch": "npm test -- --watch",
     "dist": "npm run build && build --publish onTag"
   },
-  "browserslist": "electron 1.7",
+  "browserslist": "electron 1.8",
   "build": {
     "publish": [
       {
@@ -157,7 +157,7 @@
     "cross-env": "^5.0.0",
     "cross-spawn": "^5.1.0",
     "css-loader": "^0.28.7",
-    "electron": "^1.7.8",
+    "electron": "1.8.1",
     "electron-builder": "^19.33.0",
     "electron-devtools-installer": "^2.2.0",
     "enzyme": "^2.9.1",

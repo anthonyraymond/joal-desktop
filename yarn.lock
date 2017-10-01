@@ -3245,7 +3245,7 @@ electron-updater@^2.8.9:
     source-map-support "^0.4.18"
     xelement "^1.0.16"
 
-electron@^1.7.8:
+electron@1.8.1:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/electron/-/electron-1.8.1.tgz#19b6f39f2013e204a91a60bc3086dc7a4a07ed88"
   dependencies:

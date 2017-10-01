@@ -10,7 +10,7 @@
     "url": "https://github.com/anthonyraymond"
   },
   "scripts": {
-    "postinstall": "npm rebuild --runtime=electron --target=1.7.8 --disturl=https://atom.io/download/atom-shell --build-from-source"
+    "postinstall": "npm rebuild --runtime=electron --target=1.8.1 --disturl=https://atom.io/download/atom-shell --build-from-source"
   },
   "license": "Apache-2.0",
   "dependencies": {
