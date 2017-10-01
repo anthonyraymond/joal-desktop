@@ -110,7 +110,8 @@ class Jre extends events.EventEmitter {
 
   spawn(args) {
     const self = this;
-    return childProcess.spawn(self.driver(), args, { encoding: 'utf8' });
+    const shouldRunDetached = !os.platform().startsWith('win');
+    return childProcess.spawn(self.driver(), args, { encoding: 'utf8', detached: shouldRunDetached });
   }
 
   isJavaInstalled() {

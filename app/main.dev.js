@@ -188,15 +188,6 @@ const startJoal = (uiConfig) => {
 /**
  * Add event listeners...
  */
-
-app.on('window-all-closed', () => {
-  if (joalProcess) {
-    treeKill(joalProcess.pid, 'SIGINT');
-  }
-  app.quit();
-});
-
-
 app.on('ready', async () => {
   if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true') {
     await installExtensions();
@@ -223,6 +214,17 @@ app.on('ready', async () => {
 
   // Prevent Closing when download is running
   mainWindow.on('close', (e) => {
+    console.log('in close');
+    if (joalProcess) {
+      console.log('going to treekill.');
+      treeKill(joalProcess.pid, 'SIGINT', (err) => {
+        console.log('treekill callback value', err);
+        app.quit();
+      });
+    } else {
+      app.quit();
+    }
+    /*
     if (isJoalAndJreInstallFinish) return;
     const pressedButton = dialog.showMessageBox(mainWindow, {
       type: 'question',
@@ -236,6 +238,7 @@ app.on('ready', async () => {
     if (pressedButton === 1) {
       e.preventDefault();
     }
+    */
   });
 
   mainWindow.on('closed', () => {
