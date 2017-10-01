@@ -115,98 +115,97 @@ export default class JoalUpdater extends events.EventEmitter {
           connection: 'keep-alive'
         }
       })
-      .on('response', res => {
-        // TODO: Si on tombe sur un 404, on arrive ici?
-        const len = parseInt(res.headers['content-length'], 10);
+        .on('response', res => {
+          // TODO: Si on tombe sur un 404, on arrive ici?
+          const len = parseInt(res.headers['content-length'], 10);
 
-        const hundredthOfLength = Math.floor(len / 100);
-        let chunkDownloadedSinceLastEmit = 0;
-        res.on('data', chunk => {
-          chunkDownloadedSinceLastEmit += chunk.length;
-          // We will report at top 100 events per download
-          if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
-            const downloadedBytes = chunkDownloadedSinceLastEmit;
-            chunkDownloadedSinceLastEmit = 0;
-            self.emit(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
-          }
-        });
-      })
-      .on('error', err => {
-        self.emit(EVENT_JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
-        self._cleanJoalFolder();
-        reject();
-      })
-      .pipe(zlib.createUnzip())
-      .pipe(tar.extract(self.tempUpdateDir))
-      .on('finish', () => { // FIXME: does 'end' set a param? maybe an error message on fail.
-        // delete the old clients folder
-        cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)
-        .then(() => {
-          // get previous config.json (if exists)
-          const oldJsonConfigFile = path.join(self.joalDir, 'config.json');
-          const newJsonConfigFile = path.join(self.tempUpdateDir, 'config.json');
-
-          let oldConfig = {};
-          if (fs.existsSync(oldJsonConfigFile)) {
-            try {
-              oldConfig = JSON.parse(fs.readFileSync(oldJsonConfigFile, { encoding: 'utf8' }));
-            } catch (err) {} // eslint-disable-line no-empty
-          }
-          // get new config.json
-          let newConfig;
-          if (!fs.existsSync(newJsonConfigFile)) throw new Error(`File not found: ${newJsonConfigFile}`);
-          try {
-            newConfig = JSON.parse(fs.readFileSync(newJsonConfigFile, { encoding: 'utf8' }));
-          } catch (err) {
-            throw new Error(`Failed to parse new config.json: ${err}`);
-          }
-
-          // merge the two config (with old overriding new)
-          const mergedConfig = Object.assign({}, newConfig, oldConfig);
-          fs.writeFileSync(oldJsonConfigFile, JSON.stringify(mergedConfig, null, 2));
-          return Promise.resolve();
+          const hundredthOfLength = Math.floor(len / 100);
+          let chunkDownloadedSinceLastEmit = 0;
+          res.on('data', chunk => {
+            chunkDownloadedSinceLastEmit += chunk.length;
+            // We will report at top 100 events per download
+            if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
+              const downloadedBytes = chunkDownloadedSinceLastEmit;
+              chunkDownloadedSinceLastEmit = 0;
+              self.emit(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
+            }
+          });
         })
-        .then(() => (
-          // copy /update-tmp/.jar to /.jar
-          Promise.all(fs.readdirSync(self.tempUpdateDir)
-            .filter(fileName => fileName.endsWith('.jar'))
-            .map(jar => cp(path.join(self.tempUpdateDir, jar), path.join(self.joalDir, jar)))
-          )
-        ))
-        .then(() => (
-          // remove temporary update folder
-          rmdir(self.tempUpdateDir)
-        ))
-        .then(() => {
-          // create torrent folder
-          if (!fs.existsSync(self.torrentsDir)) return mkdir(self.torrentsDir);
-          return Promise.resolve();
-        })
-        .then(() => {
-          if (!fs.existsSync(self.archivedTorrentsDir)) return mkdir(self.archivedTorrentsDir);
-          return Promise.resolve();
-        })
-        .then(() => {
-          // write version file
-          fs.writeFileSync(self.joalCoreVersionFile, self.joalCoreVersion);
-          return Promise.resolve();
-        })
-        .then(() => {
-          // eslint-disable-next-line promise/always-return
-          if (self._isLocalInstalled()) {
-            self.emit(EVENT_JOAL_INSTALLED);
-            resolve();
-          } else { // eslint-disable-line no-else-return
-            throw new Error('Failed to validate joal deployement.');
-          }
-        })
-        .catch((err) => {
-          self.emit(EVENT_JOAL_INSTALL_FAILED, `An error occured while deploying JOAL: ${err}`);
+        .on('error', err => {
+          self.emit(EVENT_JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
           self._cleanJoalFolder();
           reject();
+        })
+        .pipe(zlib.createUnzip())
+        .pipe(tar.extract(self.tempUpdateDir))
+        .on('finish', () => { // FIXME: does 'end' set a param? maybe an error message on fail.
+          // delete the old clients folder
+          cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)
+            .then(() => {
+              // get previous config.json (if exists)
+              const oldJsonConfigFile = path.join(self.joalDir, 'config.json');
+              const newJsonConfigFile = path.join(self.tempUpdateDir, 'config.json');
+
+              let oldConfig = {};
+              if (fs.existsSync(oldJsonConfigFile)) {
+                try {
+                  oldConfig = JSON.parse(fs.readFileSync(oldJsonConfigFile, { encoding: 'utf8' }));
+                } catch (err) {} // eslint-disable-line no-empty
+              }
+              // get new config.json
+              let newConfig;
+              if (!fs.existsSync(newJsonConfigFile)) throw new Error(`File not found: ${newJsonConfigFile}`);
+              try {
+                newConfig = JSON.parse(fs.readFileSync(newJsonConfigFile, { encoding: 'utf8' }));
+              } catch (err) {
+                throw new Error(`Failed to parse new config.json: ${err}`);
+              }
+
+              // merge the two config (with old overriding new)
+              const mergedConfig = Object.assign({}, newConfig, oldConfig);
+              fs.writeFileSync(oldJsonConfigFile, JSON.stringify(mergedConfig, null, 2));
+              return Promise.resolve();
+            })
+            .then(() => (
+              // copy /update-tmp/.jar to /.jar
+              Promise.all(fs.readdirSync(self.tempUpdateDir)
+                .filter(fileName => fileName.endsWith('.jar'))
+                .map(jar => cp(path.join(self.tempUpdateDir, jar), path.join(self.joalDir, jar)))
+              )
+            ))
+            .then(() => (
+              // remove temporary update folder
+              rmdir(self.tempUpdateDir)
+            ))
+            .then(() => {
+              // create torrent folder
+              if (!fs.existsSync(self.torrentsDir)) return mkdir(self.torrentsDir);
+              return Promise.resolve();
+            })
+            .then(() => {
+              if (!fs.existsSync(self.archivedTorrentsDir)) return mkdir(self.archivedTorrentsDir);
+              return Promise.resolve();
+            })
+            .then(() => {
+              // write version file
+              fs.writeFileSync(self.joalCoreVersionFile, self.joalCoreVersion);
+              return Promise.resolve();
+            })
+            .then(() => {
+              // eslint-disable-next-line promise/always-return
+              if (self._isLocalInstalled()) {
+                self.emit(EVENT_JOAL_INSTALLED);
+                resolve();
+              } else { // eslint-disable-line no-else-return
+                throw new Error('Failed to validate joal deployement.');
+              }
+            })
+            .catch((err) => {
+              self.emit(EVENT_JOAL_INSTALL_FAILED, `An error occured while deploying JOAL: ${err}`);
+              self._cleanJoalFolder();
+              reject();
+            });
         });
-      });
     });
   }
-
 }

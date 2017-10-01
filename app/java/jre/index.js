@@ -165,43 +165,43 @@ class Jre extends events.EventEmitter {
           Cookie: 'gpw_e24=http://www.oracle.com/; oraclelicense=accept-securebackup-cookie'
         }
       })
-      .on('response', res => {
-        const len = parseInt(res.headers['content-length'], 10);
+        .on('response', res => {
+          const len = parseInt(res.headers['content-length'], 10);
 
-        const hundredthOfLength = Math.floor(len / 100);
-        let chunkDownloadedSinceLastEmit = 0;
-        res.on('data', chunk => {
-          chunkDownloadedSinceLastEmit += chunk.length;
-          // We will report at top 100 events per download
-          if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
-            const downloadedBytes = chunkDownloadedSinceLastEmit;
-            chunkDownloadedSinceLastEmit = 0;
-            self.emit(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
-          }
-        });
-      })
-      .on('error', err => {
-        self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
-        self._cleanJreFolder();
-        reject();
-      })
-      .pipe(zlib.createUnzip())
-      .pipe(tar.extract(self.jreDir))
-      .on('finish', () => {
-        try {
-          if (self.isJavaInstalled()) {
-            self.emit(EVENT_JRE_INSTALLED);
-            resolve();
-          } else {
-            self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
-            reject();
-          }
-        } catch (err) {
-          self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', err.message);
+          const hundredthOfLength = Math.floor(len / 100);
+          let chunkDownloadedSinceLastEmit = 0;
+          res.on('data', chunk => {
+            chunkDownloadedSinceLastEmit += chunk.length;
+            // We will report at top 100 events per download
+            if (chunkDownloadedSinceLastEmit >= hundredthOfLength) {
+              const downloadedBytes = chunkDownloadedSinceLastEmit;
+              chunkDownloadedSinceLastEmit = 0;
+              self.emit(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, downloadedBytes, len);
+            }
+          });
+        })
+        .on('error', err => {
+          self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
           self._cleanJreFolder();
           reject();
-        }
-      });
+        })
+        .pipe(zlib.createUnzip())
+        .pipe(tar.extract(self.jreDir))
+        .on('finish', () => {
+          try {
+            if (self.isJavaInstalled()) {
+              self.emit(EVENT_JRE_INSTALLED);
+              resolve();
+            } else {
+              self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+              reject();
+            }
+          } catch (err) {
+            self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', err.message);
+            self._cleanJreFolder();
+            reject();
+          }
+        });
     });
   }
 }
