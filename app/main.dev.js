@@ -83,6 +83,7 @@ const uuidv4 = () => (
 
 const jre = new Jre(app);
 const joal = new Joal(app);
+let restartForUpdate = false;
 let isJoalAndJreInstallFinish = false;
 let joalProcess;
 
@@ -102,7 +103,7 @@ ipcMain.on('renderer-ready', (event) => {
     event.sender.send(EVENT_ELECTRON_UPDATER_INSTALL_FAILED, error); console.log(err); installJoalAndJre(event); // eslint-disable-line max-len
   });
   autoUpdater.on('download-progress', (progressObj) => event.sender.send(EVENT_ELECTRON_UPDATER_DOWNLOAD_HAS_PROGRESSED, progressObj)); // eslint-disable-line max-len
-  autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
+  autoUpdater.on('update-downloaded', () => { restartForUpdate = true; autoUpdater.quitAndInstall(); });
 
   const platform = os.platform();
   if (platform !== 'darwin' && platform.startsWith('win') === false) {
@@ -212,33 +213,37 @@ app.on('ready', async () => {
     mainWindow.focus();
   });
 
-  // Prevent Closing when download is running
-  mainWindow.on('close', (e) => {
-    console.log('in close');
+  const killJoalAndQuit = () => {
     if (joalProcess) {
-      console.log('going to treekill.');
       treeKill(joalProcess.pid, 'SIGINT', (err) => {
-        console.log('treekill callback value', err);
+        if (err) {
+          treeKill(joalProcess.pid, 'SIGKILL');
+        }
         app.quit();
       });
     } else {
       app.quit();
     }
-    /*
-    if (isJoalAndJreInstallFinish) return;
-    const pressedButton = dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      title: 'Wait !',
-      message: 'Dependency download in progress ! Closing now might result in a corrupted application. Are you sure you want to quit now?',
-      buttons: ['&Yes', '&Cancel'],
-      defaultId: 1,
-      cancelId: 1,
-      normalizeAccessKeys: true
-    });
-    if (pressedButton === 1) {
-      e.preventDefault();
+  };
+
+  // Prevent Closing when download is running
+  mainWindow.on('close', (e) => {
+    if (!isJoalAndJreInstallFinish && !restartForUpdate) {
+      const pressedButton = dialog.showMessageBox(mainWindow, {
+        type: 'question',
+        title: 'Wait !',
+        message: 'Dependency download in progress ! Closing now might result in a corrupted application. Are you sure you want to quit now?',
+        buttons: ['&Yes', '&Cancel'],
+        defaultId: 1,
+        cancelId: 1,
+        normalizeAccessKeys: true
+      });
+      if (pressedButton === 1) {
+        e.preventDefault();
+        return;
+      }
     }
-    */
+    killJoalAndQuit();
   });
 
   mainWindow.on('closed', () => {
