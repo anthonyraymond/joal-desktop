@@ -40,6 +40,19 @@ import {
 
 let mainWindow = null;
 
+// prevent multiple instances
+const amIASecondInstance = app.makeSingleInstance(() => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+if (amIASecondInstance) {
+  app.quit();
+  // return;
+}
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
