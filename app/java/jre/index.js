@@ -39,9 +39,9 @@ import {
 } from './jreInstallerEvent';
 
 const majorVersion = '8';
-const updateNumber = '144';
-const buildNumber = '01';
-const hash = '090f390dda5b47b9b721c7dfaa008135';
+const updateNumber = '152';
+const buildNumber = '16';
+const hash = 'aa0333dd3019491ca4f6ddbe78cdb6d0';
 const version = `${majorVersion}u${updateNumber}`;
 const javaVestionString = `1.${majorVersion}.0_${updateNumber}`;
 
@@ -63,7 +63,7 @@ const platform = () => {
   }
 };
 const url = () => (
-  `https://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${platform()}-${arch()}.tar.gz`
+  `http://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${platform()}-${arch()}.tar.gz`
 );
 
 class Jre extends events.EventEmitter {
