@@ -119,8 +119,8 @@ ipcMain.on('renderer-ready', (event) => {
   autoUpdater.on('update-downloaded', () => { restartForUpdate = true; autoUpdater.quitAndInstall(); });
 
   const platform = os.platform();
-  if (platform !== 'darwin' && platform.startsWith('win') === false) {
-    autoUpdater.emit('error', { message: 'Auto-updates are available only for Windows and Mac, please manually check updates at https://github.com/anthonyraymond/joal-desktop/releases' });
+  if (platform === 'darwin') {
+    autoUpdater.emit('error', { message: 'Auto-updates are available only for Windows and Linux, please manually check updates at https://github.com/anthonyraymond/joal-desktop/releases' });
   } else {
     autoUpdater.checkForUpdates();
   }
