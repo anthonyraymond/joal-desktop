@@ -26,6 +26,6 @@ install:
   - cd app && yarn && cd ..
 
 build_script:
-  - yarn dist -- --win --x64 --ia32
+  - yarn dist -- --win --x64
 
 test: off
