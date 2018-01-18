@@ -127,15 +127,16 @@ ipcMain.on('renderer-ready', (event) => {
 });
 
 const installJoalAndJre = (event) => {
+  const errorPrefix = 'An error has occured. Please email me at joal.contact@gmail.com and describe what you were doing, also include the following error message:';
   jre.on(EVENT_JRE_CHECK_FOR_UPDATES, () => event.sender.send(EVENT_JRE_CHECK_FOR_UPDATES));
   jre.on(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, (bytes, totalSize) => event.sender.send(EVENT_JRE_DOWNLOAD_HAS_PROGRESSED, bytes, totalSize)); // eslint-disable-line max-len
   jre.on(EVENT_JRE_INSTALLED, () => event.sender.send(EVENT_JRE_INSTALLED));
-  jre.on(EVENT_JRE_INSTALL_FAILED, (err) => event.sender.send(EVENT_JRE_INSTALL_FAILED, err));
+  jre.on(EVENT_JRE_INSTALL_FAILED, (err) => event.sender.send(EVENT_JRE_INSTALL_FAILED, `${errorPrefix} ${err}`));
 
   joal.on(EVENT_JOAL_CHECK_FOR_UPDATES, () => event.sender.send(EVENT_JOAL_CHECK_FOR_UPDATES));
   joal.on(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, (bytes, totalSize) => event.sender.send(EVENT_JOAL_DOWNLOAD_HAS_PROGRESSED, bytes, totalSize)); // eslint-disable-line max-len
   joal.on(EVENT_JOAL_INSTALLED, () => event.sender.send(EVENT_JOAL_INSTALLED));
-  joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => event.sender.send(EVENT_JOAL_INSTALL_FAILED, err));
+  joal.on(EVENT_JOAL_INSTALL_FAILED, (err) => event.sender.send(EVENT_JOAL_INSTALL_FAILED, `${errorPrefix} ${err}`));
 
   Promise.all([
     jre.installIfRequired(),

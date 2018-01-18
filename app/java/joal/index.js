@@ -132,12 +132,22 @@ export default class JoalUpdater extends events.EventEmitter {
           });
         })
         .on('error', err => {
-          self.emit(EVENT_JOAL_INSTALL_FAILED, `Failed to download archive: ${err}`);
+          self.emit(EVENT_JOAL_INSTALL_FAILED, err.message);
           self._cleanJoalFolder();
           reject();
         })
         .pipe(zlib.createUnzip())
+        .on('error', err => {
+          self.emit(EVENT_JOAL_INSTALL_FAILED, err.message);
+          self._cleanJoalFolder();
+          reject();
+        })
         .pipe(tar.extract(self.tempUpdateDir))
+        .on('error', err => {
+          self.emit(EVENT_JOAL_INSTALL_FAILED, err.message);
+          self._cleanJoalFolder();
+          reject();
+        })
         .on('finish', () => { // FIXME: does 'end' set a param? maybe an error message on fail.
           // delete the old clients folder
           cp(path.join(self.tempUpdateDir, 'clients'), self.clientFilesDir)

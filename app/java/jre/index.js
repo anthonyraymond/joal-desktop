@@ -40,7 +40,7 @@ import {
 
 const majorVersion = '8';
 const updateNumber = '152';
-const buildNumber = '16';
+const buildNumber = '1136.2';
 const hash = 'aa0333dd3019491ca4f6ddbe78cdb6d0';
 const version = `${majorVersion}u${updateNumber}`;
 const javaVestionString = `1.${majorVersion}.0_${updateNumber}`;
@@ -56,14 +56,14 @@ const arch = () => {
 const platform = () => {
   const systemPlatform = os.platform();
   switch (systemPlatform) {
-    case 'darwin': return 'macosx';
+    case 'darwin': return 'osx';
     case 'win32': return 'windows';
-    case 'linux': return systemPlatform;
+    case 'linux': return 'linux';
     default: throw new Error(`unsupported platform: ${systemPlatform}`);
   }
 };
 const url = () => (
-  `http://download.oracle.com/otn-pub/java/jdk/${version}-b${buildNumber}/${hash}/jre-${version}-${platform()}-${arch()}.tar.gz`
+  `https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbrex${version}b${buildNumber}_${platform()}_x64.tar.gz`
 );
 
 class Jre extends events.EventEmitter {
@@ -89,10 +89,11 @@ class Jre extends events.EventEmitter {
       default: throw new Error(`unsupported platform: ${systemPlatform}`);
     }
 
+    // Get all directories present in the $appdata/jre folder, since the zip extracted folder is OS dependant we need to fetch t dynamically
     const jreDirs = Jre.getDirectories(self.jreDir);
     if (jreDirs.length < 1) throw new Error('no jre found');
     const d = driver.slice();
-    d.unshift(jreDirs[0]);
+    d.unshift(jreDirs[0]); // append the zip extracted folder name
     d.unshift(self.jreDir);
     return path.join(...d);
   }
@@ -121,8 +122,9 @@ class Jre extends events.EventEmitter {
       ['-version'],
       { encoding: 'utf8' } // this is not a jvm param, it tells childProcess to return raw text instead of a Buffer
     );
+
     // java -version output is printed to stderr, not a "bug" and Oracle Win't fix : http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4380614
-    return javaResponse.stderr && javaResponse.stderr.startsWith(`java version "${javaVestionString}"`);
+    return javaResponse.stderr && javaResponse.stderr.startsWith(`openjdk version "1.${majorVersion}`);
   }
 
   async _cleanJreFolder() {
@@ -162,9 +164,14 @@ class Jre extends events.EventEmitter {
         agent: false,
         headers: {
           connection: 'keep-alive',
-          Cookie: 'gpw_e24=http://www.oracle.com/; oraclelicense=accept-securebackup-cookie'
+          'User-Agent': 'joal-desktop'
         }
       })
+        .on('error', err => {
+          self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
+          self._cleanJreFolder();
+          reject();
+        })
         .on('response', res => {
           const len = parseInt(res.headers['content-length'], 10);
 
@@ -186,18 +193,28 @@ class Jre extends events.EventEmitter {
           reject();
         })
         .pipe(zlib.createUnzip())
+        .on('error', err => {
+          self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
+          self._cleanJreFolder();
+          reject();
+        })
         .pipe(tar.extract(self.jreDir))
+        .on('error', err => {
+          self.emit(EVENT_JRE_INSTALL_FAILED, err.message);
+          self._cleanJreFolder();
+          reject();
+        })
         .on('finish', () => {
           try {
             if (self.isJavaInstalled()) {
               self.emit(EVENT_JRE_INSTALLED);
               resolve();
             } else {
-              self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', 'JRE seems not to be installed');
+              self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install: JRE seems not to be installed');
               reject();
             }
           } catch (err) {
-            self.emit(EVENT_JRE_INSTALL_FAILED, 'Failed to validate jre install:', err.message);
+            self.emit(EVENT_JRE_INSTALL_FAILED, `Failed to validate jre install: ${err.message}`);
             self._cleanJreFolder();
             reject();
           }
