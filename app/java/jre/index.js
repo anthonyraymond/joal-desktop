@@ -83,7 +83,7 @@ class Jre extends events.EventEmitter {
     const systemPlatform = os.platform();
     let driver;
     switch (systemPlatform) {
-      case 'darwin': driver = ['Contents', 'Home', 'bin', 'java']; break;
+      case 'darwin': driver = ['Contents', 'Home', 'jre', 'bin', 'java']; break;
       case 'win32': driver = ['bin', 'java.exe']; break;
       case 'linux': driver = ['bin', 'java']; break;
       default: throw new Error(`unsupported platform: ${systemPlatform}`);
