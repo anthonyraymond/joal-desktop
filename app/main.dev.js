@@ -177,6 +177,7 @@ const startJoal = (uiConfig) => {
     console.log(`stderr: ${data}`);
   });
 
+  // TODO: ensure this is not called on each web query afterward
   // set the localtorage configuration before dom render
   mainWindow.webContents.on('did-get-response-details', () => {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`);
