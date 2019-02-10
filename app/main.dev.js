@@ -10,31 +10,13 @@
  *
  * @flow
  */
-import { app, BrowserWindow } from 'electron';
-import { autoUpdater } from 'electron-updater';
-import log from 'electron-log';
-import MenuBuilder from './menu';
-
-export default class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
-
-let mainWindow = null;
+import { app, ipcMain } from 'electron';
+import WindowManager from './electron/WindowManager';
+import { log } from './electron/util';
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
-}
-
-if (
-  process.env.NODE_ENV === 'development' ||
-  process.env.DEBUG_PROD === 'true'
-) {
-  require('electron-debug')();
 }
 
 const installExtensions = async () => {
@@ -47,56 +29,33 @@ const installExtensions = async () => {
   ).catch(console.log);
 };
 
-/**
- * Add event listeners...
- */
+let windowManager: WindowManager;
 
-app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('ready', async () => {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
-    await installExtensions();
-  }
-
-  mainWindow = new BrowserWindow({
-    show: false,
-    width: 1024,
-    height: 728
-  });
-
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
-
-  // @TODO: Use 'ready-to-show' event
-  //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-  mainWindow.webContents.on('did-finish-load', () => {
-    if (!mainWindow) {
-      throw new Error('"mainWindow" is not defined');
+if (app.requestSingleInstanceLock()) {
+  app.on('second-instance', () => {
+    // someone tried to run a second instance, we should focus our window
+    if (windowManager !== undefined) {
+      windowManager.focusFirstWindow();
     }
-    if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
-    } else {
-      mainWindow.show();
-      mainWindow.focus();
+    return true;
+  });
+
+  require('electron-debug')({ devToolsMode: 'bottom' });
+
+  app.on('ready', async () => {
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.DEBUG_PROD === 'true'
+    ) {
+      await installExtensions();
     }
+    ipcMain.on('log.error', (event: any, arg: any) => {
+      log(arg);
+    });
+
+    windowManager = new WindowManager(`file://${__dirname}/app.html`); // pass down default URI
+    windowManager.openWindow();
   });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
-
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
-});
+} else {
+  app.quit();
+}

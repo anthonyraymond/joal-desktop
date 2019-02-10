@@ -32,7 +32,5 @@ install:
 test_script:
   - yarn package-ci
   - yarn lint
-  # - yarn flow
-  - yarn test
   - yarn build-e2e
   - yarn test-e2e

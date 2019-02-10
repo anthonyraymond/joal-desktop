@@ -1,8 +1,8 @@
 {
-  "name": "electron-react-boilerplate",
-  "productName": "ElectronReact",
-  "version": "0.17.1",
-  "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
+  "name": "joal-desktop",
+  "productName": "JoalDesktop",
+  "version": "1.2.0",
+  "description": "A tool to fake your torrent tracker upload.",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
@@ -57,16 +57,25 @@
   },
   "main": "./app/main.prod.js",
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.develar.ElectronReact",
+    "productName": "JoalDesktop",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "appId": "org.araymond.joal.desktop",
     "files": [
       "app/dist/",
       "app/app.html",
       "app/main.prod.js",
       "app/main.prod.js.map",
-      "package.json"
+      "package.json",
+      "resources/about-icon.png"
     ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg"
+      ]
+    },
     "dmg": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "contents": [
         {
           "x": 130,
@@ -82,18 +91,20 @@
     },
     "win": {
       "target": [
-        "nsis",
-        "msi"
+        "nsis"
       ]
     },
+    "nsis": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    },
     "linux": {
+      "category": "Utility",
       "target": [
-        "deb",
-        "rpm",
-        "snap",
         "AppImage"
-      ],
-      "category": "Development"
+      ]
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "directories": {
       "buildResources": "resources",
@@ -101,48 +112,29 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate",
-      "private": false
+      "owner": "anthonyraymond",
+      "repo": "joal-desktop"
     }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/anthonyraymond/joal-desktop"
   },
   "author": {
-    "name": "Electron React Boilerplte Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "Anthony",
+    "email": "joal.contact@gmail.com",
+    "url": "https://github.com/anthonyraymond"
   },
-  "contributors": [
-    {
-      "name": "Vikram Rangaraj",
-      "email": "vikr01@icloud.com",
-      "url": "https://github.com/vikr01"
-    },
-    {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
-    }
-  ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/anthonyraymond/joal-desktop/issues"
   },
   "keywords": [
-    "electron",
-    "boilerplate",
-    "react",
-    "redux",
-    "flow",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "joal",
+    "desktop",
+    "joal-desktop"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/anthonyraymond/joal-desktop#readme",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {
@@ -201,6 +193,7 @@
     "electron": "^3.0.10",
     "electron-builder": "^20.34.0",
     "electron-devtools-installer": "^2.2.4",
+    "electron-is-dev": "^1.0.1",
     "enzyme": "^3.7.0",
     "enzyme-adapter-react-16": "^1.7.0",
     "enzyme-to-json": "^3.3.4",
@@ -256,11 +249,16 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.5.0",
+    "@material-ui/core": "^3.9.0",
+    "@material-ui/icons": "^3.0.2",
+    "about-window": "^1.12.1",
     "devtron": "^1.4.0",
     "electron-debug": "^2.0.0",
     "electron-log": "^2.2.17",
     "electron-updater": "^3.2.3",
     "history": "^4.7.2",
+    "immutability-helper": "^3.0.0",
+    "p-progress": "^0.2.0",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
     "react-hot-loader": "^4.3.12",
@@ -269,15 +267,16 @@
     "react-router-dom": "^4.3.1",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
-    "source-map-support": "^0.5.9"
+    "request": "^2.88.0",
+    "source-map-support": "^0.5.9",
+    "tar-fs": "^1.16.3",
+    "typeface-roboto": "^0.0.54",
+    "wait-on": "^3.2.0"
   },
   "devEngines": {
     "node": ">=7.x",
     "npm": ">=4.x",
     "yarn": ">=0.21.3"
-  },
-  "collective": {
-    "url": "https://opencollective.com/electron-react-boilerplate-594"
   },
   "browserslist": "electron 1.6"
 }
