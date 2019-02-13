@@ -2,6 +2,7 @@ import os from 'os';
 import { app } from 'electron';
 import path from 'path';
 import request from 'request';
+import fs from 'fs';
 import rimraf from 'rimraf';
 import zlib from 'zlib';
 import tar from 'tar-fs';
@@ -79,7 +80,9 @@ const isInstalledAndDoesNotRequiresUpdates = () => {
 };
 
 const cleanInstallFolder = () => {
-  rimraf.sync(ROOT_INSTALL_FOLDER);
+  if (fs.existsSync(ROOT_INSTALL_FOLDER)) {
+    rimraf.sync(ROOT_INSTALL_FOLDER);
+  }
 };
 
 const install = () =>
@@ -92,6 +95,13 @@ const install = () =>
         updateInfo: { version: JRE_VERSION }
       });
       return;
+    }
+
+    try {
+      cleanInstallFolder(); // clean before install
+    } catch (e) {
+      console.log('Jre failed to clean install folder before install');
+      reject(e);
     }
 
     console.log(`Jre is not installed yet, pulling it from ${url()}`);

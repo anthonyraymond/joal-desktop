@@ -21,9 +21,9 @@ import {
   updateProcessError
 } from '../../components/updaters/updaters.actions';
 
+/* eslint-disable class-methods-use-this */
 export default class DepencencyUpdater {
   checkAndInstallUpdate(ipcChannel) {
-    // eslint-disable-line class-methods-use-this
     // first check and install electron update
     const passReducerActionToRenderer = action => {
       // eslint-disable-line no-param-reassign
@@ -31,7 +31,7 @@ export default class DepencencyUpdater {
     };
 
     passReducerActionToRenderer(electronCheckingForUpdate());
-    updateElectron()
+    return updateElectron()
       .onProgress(progress =>
         passReducerActionToRenderer(electronDownloadProgress(progress * 100))
       )
@@ -115,3 +115,4 @@ export default class DepencencyUpdater {
       });
   }
 }
+/* eslint-enable class-methods-use-this */

@@ -1,4 +1,9 @@
-import { app, ipcMain, BrowserWindow as BrowserWindowElectron } from 'electron';
+import {
+  app,
+  ipcMain,
+  BrowserWindow as BrowserWindowElectron,
+  dialog
+} from 'electron';
 import waitOn from 'wait-on';
 import StateManager from './StateManager';
 import MenuBuilder from './MenuBuilder';
@@ -13,6 +18,8 @@ export default class WindowManager {
   uiUrl;
 
   dependencyUpdater = new DependencyUpdater();
+
+  isUpdateInProgress = false;
 
   stateManager = new StateManager();
 
@@ -46,11 +53,29 @@ export default class WindowManager {
     window: BrowserWindow,
     descriptor: WindowItem
   ): void {
-    window.on('close', () => {
+    window.on('close', e => {
       WindowManager.saveWindowState(window, descriptor);
 
       this.stateManager.save();
 
+      if (this.isUpdateInProgress) {
+        const pressedButton = dialog.showMessageBox(window, {
+          type: 'question',
+          title: 'Update in progress',
+          message:
+            'Closing the app during the dependencies download process may leave your app in an unstable state.\n\nAre you sure you want to quit now ?',
+          buttons: ['&Yes', '&Cancel'],
+          defaultId: 1,
+          cancelId: 1,
+          normalizeAccessKeys: true
+        });
+        if (pressedButton === 1) {
+          e.preventDefault();
+          return;
+        }
+      }
+      this.isUpdateInProgress = false; // the below app.quit() will call this function another time, prevent a second dialog to open
+      // Force quit when the window is closed to prevent mac from hidding in in the dock.
       this.joal.kill(() => app.quit());
     });
     window.on('closed', () => {
@@ -60,22 +85,26 @@ export default class WindowManager {
 
   registerIpcEventHandlers(window: BrowserWindow): void {
     ipcMain.on('renderer-ready-to-update', event => {
-      this.dependencyUpdater.checkAndInstallUpdate(event);
+      this.isUpdateInProgress = true;
+      this.dependencyUpdater
+        .checkAndInstallUpdate(event)
+        .then(() => {
+          this.isUpdateInProgress = false;
+          return true;
+        })
+        .catch(() => {
+          this.isUpdateInProgress = false;
+        });
     });
     ipcMain.on('renderer-ready-to-start-joal', () => {
       console.log('Start joal now');
 
       const uiConfig = this.joal.start();
+      const configAsUrlParam = encodeURI(JSON.stringify(uiConfig));
 
-      // TODO : remove this function as soon as the webui is able to intercept the loadURL.extraHeaders on startup
-      window.webContents.on('did-navigate', () => {
-        window.webContents.executeJavaScript(
-          `localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`
-        );
-      });
       const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${
         uiConfig.pathPrefix
-      }/ui`;
+      }/ui?ui_credentials=${configAsUrlParam}`;
       waitOn(
         {
           resources: [uiUrl],
@@ -92,11 +121,7 @@ export default class WindowManager {
             );
             return;
           }
-          window.loadURL(uiUrl, {
-            extraHeaders: `joal-desktop-forwarded-ui-config: ${JSON.stringify(
-              uiConfig
-            )}`
-          });
+          window.loadURL(uiUrl);
         }
       );
     });

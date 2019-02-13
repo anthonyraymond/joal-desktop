@@ -14,7 +14,7 @@ const CLIENT_FILES_DIR = path.join(ROOT_INSTALL_FOLDER, 'clients');
 const TORRENTS_DIR = path.join(ROOT_INSTALL_FOLDER, 'torrents');
 const ARCHIVED_TORRENTS_DIR = path.join(TORRENTS_DIR, 'archived');
 const JOAL_CORE_VERSION_FILE = path.join(ROOT_INSTALL_FOLDER, '.joal-core');
-const JOAL_CORE_VERSION = '2.1.11';
+const JOAL_CORE_VERSION = '2.1.12';
 const JAR_NAME = `jack-of-all-trades-${JOAL_CORE_VERSION}.jar`;
 const DOWNLOAD_URL = `https://github.com/anthonyraymond/joal/releases/download/v${JOAL_CORE_VERSION}/joal.tar.gz`;
 
@@ -94,8 +94,13 @@ const cleanInstallFolder = () => {
       .forEach(jar => rimraf.sync(path.join(ROOT_INSTALL_FOLDER, jar)));
   }
 
-  rimraf.sync(TMP_UPDATE_DIR);
-  rimraf.sync(JOAL_CORE_VERSION_FILE);
+  if (fs.existsSync(TMP_UPDATE_DIR)) {
+    rimraf.sync(TMP_UPDATE_DIR);
+  }
+
+  if (fs.existsSync(JOAL_CORE_VERSION_FILE)) {
+    rimraf.sync(JOAL_CORE_VERSION_FILE);
+  }
 };
 
 const install = () =>
@@ -108,6 +113,12 @@ const install = () =>
         updateInfo: { version: JOAL_CORE_VERSION }
       });
       return;
+    }
+    try {
+      cleanInstallFolder(); // clean before install
+    } catch (e) {
+      console.log('Joal failed to clean install folder before install');
+      reject(e);
     }
 
     console.log('Joal is not installed yet, pulling from github');

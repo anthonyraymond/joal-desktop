@@ -68,9 +68,9 @@ export default class Joal {
     if (callback) {
       callbackFn = callback;
     }
-    console.log('Killing joal');
 
     if (this.joalProcess) {
+      console.log('Killing joal');
       treeKill(this.joalProcess.pid, 'SIGINT', err => {
         if (!err) {
           return callbackFn();
