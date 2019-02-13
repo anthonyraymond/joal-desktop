@@ -86,7 +86,15 @@ export default class WindowManager {
   registerIpcEventHandlers(window: BrowserWindow): void {
     ipcMain.on('renderer-ready-to-update', event => {
       this.isUpdateInProgress = true;
-      this.dependencyUpdater.checkAndInstallUpdate(event);
+      this.dependencyUpdater
+        .checkAndInstallUpdate(event)
+        .then(() => {
+          this.isUpdateInProgress = false;
+          return true;
+        })
+        .catch(() => {
+          this.isUpdateInProgress = false;
+        });
     });
     ipcMain.on('renderer-ready-to-start-joal', () => {
       console.log('Start joal now');

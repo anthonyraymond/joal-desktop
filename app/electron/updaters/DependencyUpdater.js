@@ -31,7 +31,7 @@ export default class DepencencyUpdater {
     };
 
     passReducerActionToRenderer(electronCheckingForUpdate());
-    updateElectron()
+    return updateElectron()
       .onProgress(progress =>
         passReducerActionToRenderer(electronDownloadProgress(progress * 100))
       )
