@@ -94,8 +94,13 @@ const cleanInstallFolder = () => {
       .forEach(jar => rimraf.sync(path.join(ROOT_INSTALL_FOLDER, jar)));
   }
 
-  rimraf.sync(TMP_UPDATE_DIR);
-  rimraf.sync(JOAL_CORE_VERSION_FILE);
+  if (fs.existsSync(TMP_UPDATE_DIR)) {
+    rimraf.sync(TMP_UPDATE_DIR);
+  }
+
+  if (fs.existsSync(JOAL_CORE_VERSION_FILE)) {
+    rimraf.sync(JOAL_CORE_VERSION_FILE);
+  }
 };
 
 const install = () =>
@@ -108,6 +113,12 @@ const install = () =>
         updateInfo: { version: JOAL_CORE_VERSION }
       });
       return;
+    }
+    try {
+      cleanInstallFolder(); // clean before install
+    } catch (e) {
+      console.log('Joal failed to clean install folder before install');
+      reject(e);
     }
 
     console.log('Joal is not installed yet, pulling from github');
