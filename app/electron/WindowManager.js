@@ -100,16 +100,11 @@ export default class WindowManager {
       console.log('Start joal now');
 
       const uiConfig = this.joal.start();
+      const configAsUrlParam = encodeURI(JSON.stringify(uiConfig));
 
-      // TODO : remove this function as soon as the webui is able to intercept the loadURL.extraHeaders on startup
-      window.webContents.on('did-navigate', () => {
-        window.webContents.executeJavaScript(
-          `localStorage.setItem('guiConfig', '${JSON.stringify(uiConfig)}')`
-        );
-      });
       const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${
         uiConfig.pathPrefix
-      }/ui`;
+      }/ui?ui_credentials=${configAsUrlParam}`;
       waitOn(
         {
           resources: [uiUrl],
@@ -126,11 +121,7 @@ export default class WindowManager {
             );
             return;
           }
-          window.loadURL(uiUrl, {
-            extraHeaders: `joal-desktop-forwarded-ui-config: ${JSON.stringify(
-              uiConfig
-            )}`
-          });
+          window.loadURL(uiUrl);
         }
       );
     });
