@@ -13,7 +13,7 @@ import type { Updater } from '../types';
 type Props = {
   name: string,
   updater: Updater,
-  classes: {}
+  classes: Object
 };
 
 const styles = theme => ({

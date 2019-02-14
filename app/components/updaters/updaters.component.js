@@ -10,7 +10,7 @@ import type { UpdaterState } from './types';
 
 type Props = {
   updaters: UpdaterState,
-  classes: {},
+  classes: Object,
   onClickGithubLink: () => void
 };
 

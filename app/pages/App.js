@@ -14,7 +14,7 @@ const styles = theme => ({
 });
 
 type Props = {
-  classes: {},
+  classes: Object,
   history: {}
 };
 
