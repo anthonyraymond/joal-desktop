@@ -100,7 +100,7 @@ export default class WindowManager {
       console.log('Start joal now');
 
       const uiConfig = this.joal.start();
-      const configAsUrlParam = encodeURI(JSON.stringify(uiConfig));
+      const configAsUrlParam = encodeURIComponent(JSON.stringify(uiConfig));
 
       const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${
         uiConfig.pathPrefix
