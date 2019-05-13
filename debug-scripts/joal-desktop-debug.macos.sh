@@ -7,7 +7,7 @@ joalRootPath="$(pwd)/Library/Application Support/JoalDesktop"
 cd - 1> /dev/null
 
 # Run joal
-"$joalRootPath/jre/jdk/Contents/Home/jre/bin/java" -jar $joalRootPath/joal-core/jack-of-all-trades-*.jar \
+"$joalRootPath/jre/jdk/Contents/Home/jre/bin/java" -jar "$joalRootPath"/joal-core/jack-of-all-trades-*.jar \
 	--joal-conf="$joalRootPath/joal-core" \
 	--spring.main.web-environment=true \
 	--server.port=5081 \
