@@ -14,9 +14,9 @@ const CLIENT_FILES_DIR = path.join(ROOT_INSTALL_FOLDER, 'clients');
 const TORRENTS_DIR = path.join(ROOT_INSTALL_FOLDER, 'torrents');
 const ARCHIVED_TORRENTS_DIR = path.join(TORRENTS_DIR, 'archived');
 const JOAL_CORE_VERSION_FILE = path.join(ROOT_INSTALL_FOLDER, '.joal-core');
-const JOAL_CORE_VERSION = '2.1.12';
+const JOAL_CORE_VERSION = '2.1.19';
 const JAR_NAME = `jack-of-all-trades-${JOAL_CORE_VERSION}.jar`;
-const DOWNLOAD_URL = `https://github.com/anthonyraymond/joal/releases/download/v${JOAL_CORE_VERSION}/joal.tar.gz`;
+const DOWNLOAD_URL = `https://github.com/anthonyraymond/joal/releases/download/${JOAL_CORE_VERSION}/joal.tar.gz`;
 
 export const getJoalJarPath = () => path.join(ROOT_INSTALL_FOLDER, JAR_NAME);
 export const getJoalConfigPath = () => ROOT_INSTALL_FOLDER;
@@ -141,6 +141,9 @@ const install = () =>
       })
       .on('response', res => {
         if (res.statusCode !== 200) {
+          console.log(
+            `Failed to download JOAL: status code is ${res.statusCode}`
+          );
           reject(`Failed to download JOAL: status code is ${res.statusCode}`);
         }
         totalDownloadLength = parseInt(res.headers['content-length'], 10);
@@ -219,6 +222,7 @@ const install = () =>
             }); // After the whole archive has been extracted sent the progress(1) using the resolve method
           } else {
             // eslint-disable-line no-else-return
+            console.log('Failed to validate joal deployement.');
             throw new Error('Failed to validate joal deployement.');
           }
         } catch (err) {
