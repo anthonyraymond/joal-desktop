@@ -2,7 +2,7 @@
   "name": "joal-desktop",
   "productName": "JoalDesktop",
   "version": "2.0.2",
-  "description": "A tool to fake your torrent tracker upload.",
+  "description": "A tool to fake your torrent tracker upload",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js --colors",
