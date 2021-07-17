@@ -36,9 +36,8 @@ const styles = theme => ({
     color: theme.palette.error.light
   }
 });
-
+// eslint-disable-next-line react/prop-types
 const UpdaterComponent = ({ name, updater, classes }) => {
-  // eslint-disable-line react/prop-types
   let Message;
   if (updater.error) {
     Message = (
