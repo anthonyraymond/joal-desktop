@@ -20,7 +20,11 @@ jobs:
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.2.0
-        
+      
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      
       - name: Cache Node.js modules
         uses: actions/cache@v1
         with:
@@ -58,6 +62,10 @@ jobs:
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.2.0
+      
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
         
       - name: Cache Node.js modules
         uses: actions/cache@v1
