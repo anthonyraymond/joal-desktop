@@ -8,13 +8,6 @@ import ErrorIcon from '@material-ui/icons/Close';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { withStyles } from '@material-ui/core/styles';
 import classnames from 'classnames';
-import type { Updater } from '../types';
-
-type Props = {
-  name: string,
-  updater: Updater,
-  classes: Object
-};
 
 const styles = theme => ({
   statusIcon: {
@@ -44,7 +37,8 @@ const styles = theme => ({
   }
 });
 
-const UpdaterComponent = ({ name, updater, classes }: Props) => {
+const UpdaterComponent = ({ name, updater, classes }) => {
+  // eslint-disable-line react/prop-types
   let Message;
   if (updater.error) {
     Message = (

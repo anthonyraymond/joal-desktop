@@ -4,13 +4,6 @@ import treeKill from 'tree-kill';
 import { getJreBinaryPath } from '../updaters/jre-updater';
 import { getJoalJarPath, getJoalConfigPath } from '../updaters/joal-updater';
 
-export type WebUiConfig = {
-  host: string,
-  port: number,
-  pathPrefix: string,
-  secretToken: string
-};
-
 const uuidv4 = () =>
   'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = (Math.random() * 16) | 0; // eslint-disable-line no-bitwise
@@ -18,7 +11,7 @@ const uuidv4 = () =>
     return v.toString(16);
   });
 
-const createJoalRancomWebUiConfig = (): WebUiConfig => ({
+const createJoalRancomWebUiConfig = () => ({
   host: 'localhost',
   port: 5081,
   pathPrefix: uuidv4(),
@@ -26,13 +19,13 @@ const createJoalRancomWebUiConfig = (): WebUiConfig => ({
 });
 
 export default class Joal {
-  currentConfig: WebUiConfig;
+  currentConfig;
 
   constructor() {
     this.currentConfig = createJoalRancomWebUiConfig();
   }
 
-  start(): WebUiConfig {
+  start() {
     if (this.joalProcess) {
       this.joalProcess.kill('SIGINT');
     }
@@ -63,7 +56,7 @@ export default class Joal {
     return this.currentConfig;
   }
 
-  kill(callback: () => void): void {
+  kill(callback) {
     let callbackFn = () => {};
     if (callback) {
       callbackFn = callback;

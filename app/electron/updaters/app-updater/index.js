@@ -3,7 +3,7 @@ import os from 'os';
 import { autoUpdater as electronUpdater } from 'electron-updater';
 import isDev from 'electron-is-dev';
 
-const checkAndInstallUpdate = (): Promise =>
+const checkAndInstallUpdate = () =>
   new PProgress((resolve, reject, progress) => {
     electronUpdater.on('update-not-available', updateInfo =>
       resolve({

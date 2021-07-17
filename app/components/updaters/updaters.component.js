@@ -6,13 +6,6 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import SingleUpdater from './single-updater/single-updater.component';
 import pkg from '../../../package.json';
-import type { UpdaterState } from './types';
-
-type Props = {
-  updaters: UpdaterState,
-  classes: Object,
-  onClickGithubLink: () => void
-};
 
 const styles = theme => ({
   paper: {
@@ -30,7 +23,9 @@ const styles = theme => ({
   }
 });
 
-const Updaters = ({ updaters, onClickGithubLink, classes }: Props) => (
+const Updaters = (
+  { updaters, onClickGithubLink, classes } // eslint-disable-line react/prop-types
+) => (
   <Grid container direction="column">
     <Paper className={classes.paper}>
       <Grid item xs={12}>

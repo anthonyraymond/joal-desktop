@@ -11,7 +11,7 @@ const defaultWindow = () => ({
 export default class StateManager {
   store;
 
-  data: Config;
+  data;
 
   constructor() {
     this.store = new ConfigStore('joal-desktop', { window: defaultWindow() });
@@ -25,13 +25,13 @@ export default class StateManager {
     }
   }
 
-  restoreWindow(): void {
+  restoreWindow() {
     const data = this.getOrLoadData();
     data.window = defaultWindow();
     this.store.all = data;
   }
 
-  getOrLoadData(): Config {
+  getOrLoadData() {
     let { data } = this;
     if (data === undefined) {
       data = this.store.all;
@@ -40,26 +40,14 @@ export default class StateManager {
     return data;
   }
 
-  getWindow(): WindowItem {
+  getWindow() {
     return this.getOrLoadData().window;
   }
 
-  save(): void {
+  save() {
     const { data } = this;
     if (data !== undefined) {
       this.store.all = data;
     }
   }
 }
-
-type Config = {
-  window: WindowItem
-};
-
-export type WindowItem = {
-  width?: number,
-  height?: number,
-  x?: number,
-  y?: number,
-  maximized?: boolean
-};

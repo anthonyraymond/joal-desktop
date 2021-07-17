@@ -4,10 +4,10 @@ export function isDev() {
   return innerIsDev;
 }
 
-let innerLog: (...args: any[]) => void;
+let innerLog;
 
 if (isDev()) {
-  innerLog = (...args: any[]): void => {
+  innerLog = (...args) => {
     console.log(args);
   };
 } else {
@@ -15,6 +15,6 @@ if (isDev()) {
   innerLog = log.info.bind(log);
 }
 
-export function log(...args: any[]): void {
+export function log(...args) {
   innerLog(args);
 }

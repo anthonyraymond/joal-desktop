@@ -10,8 +10,6 @@ import MenuBuilder from './MenuBuilder';
 import DependencyUpdater from './updaters/DependencyUpdater';
 import Joal from './runner/Joal';
 
-import type { WindowItem } from './StateManager';
-
 export const WINDOW_NAVIGATED = 'windowNavigated';
 
 export default class WindowManager {
@@ -25,16 +23,16 @@ export default class WindowManager {
 
   joal = new Joal();
 
-  window: BrowserWindow = undefined;
+  window = undefined;
 
-  constructor(uiUrl: string) {
+  constructor(uiUrl) {
     this.uiUrl = uiUrl;
     app.on('window-all-closed', () => {
       app.quit();
     });
   }
 
-  static saveWindowState(window: BrowserWindow, descriptor: WindowItem): void {
+  static saveWindowState(window, descriptor) {
     if (window.isMaximized()) {
       delete descriptor.width; // eslint-disable-line no-param-reassign
       delete descriptor.height; // eslint-disable-line no-param-reassign
@@ -49,10 +47,7 @@ export default class WindowManager {
     }
   }
 
-  registerWindowEventHandlers(
-    window: BrowserWindow,
-    descriptor: WindowItem
-  ): void {
+  registerWindowEventHandlers(window, descriptor) {
     window.on('close', e => {
       WindowManager.saveWindowState(window, descriptor);
 
@@ -83,7 +78,7 @@ export default class WindowManager {
     });
   }
 
-  registerIpcEventHandlers(window: BrowserWindow): void {
+  registerIpcEventHandlers(window) {
     ipcMain.on('renderer-ready-to-update', event => {
       this.isUpdateInProgress = true;
       this.dependencyUpdater
@@ -127,14 +122,14 @@ export default class WindowManager {
     });
   }
 
-  openWindow(): void {
+  openWindow() {
     let descriptor = this.stateManager.getWindow();
     if (descriptor === null || descriptor === undefined) {
       this.stateManager.restoreWindow();
       descriptor = this.stateManager.getWindow();
     }
 
-    const options: BrowserWindowConstructorOptions = {
+    const options = {
       // to avoid visible maximizing
       show: false,
       webPreferences: {
@@ -168,7 +163,7 @@ export default class WindowManager {
     this.window = window;
   }
 
-  focusFirstWindow(): void {
+  focusFirstWindow() {
     if (this.window !== undefined) {
       const { window } = this;
       if (window.isMinimized()) {

@@ -5,11 +5,6 @@ import primary from '@material-ui/core/colors/blue';
 import secondary from '@material-ui/core/colors/lightGreen';
 import App from './App';
 
-type Props = {
-  store: {},
-  history: {}
-};
-
 const muiTheme = createMuiTheme({
   palette: {
     primary: {
@@ -29,7 +24,9 @@ const muiTheme = createMuiTheme({
   }
 });
 
-const Root = ({ store, history }: Props) => (
+const Root = (
+  { store, history } // eslint-disable-line react/prop-types
+) => (
   <Provider store={store}>
     <MuiThemeProvider theme={muiTheme}>
       <App history={history} />

@@ -1,12 +1,11 @@
-// @flow
-import { app, Menu, shell, BrowserWindow } from 'electron';
+import { app, Menu, shell } from 'electron';
 import path from 'path';
 import aboutWindow from 'about-window';
 
 export default class MenuBuilder {
-  mainWindow: BrowserWindow;
+  mainWindow;
 
-  constructor(mainWindow: BrowserWindow) {
+  constructor(mainWindow) {
     this.mainWindow = mainWindow;
   }
 

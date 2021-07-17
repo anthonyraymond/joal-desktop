@@ -8,7 +8,6 @@
  * When running `yarn build` or `yarn build-main`, this file is compiled to
  * `./app/main.prod.js` using webpack. This gives us some performance wins.
  *
- * @flow
  */
 import { app, ipcMain } from 'electron';
 import WindowManager from './electron/WindowManager';
@@ -29,7 +28,7 @@ const installExtensions = async () => {
   ).catch(console.log);
 };
 
-let windowManager: WindowManager;
+let windowManager;
 
 if (app.requestSingleInstanceLock()) {
   app.on('second-instance', () => {
@@ -49,7 +48,7 @@ if (app.requestSingleInstanceLock()) {
     ) {
       await installExtensions();
     }
-    ipcMain.on('log.error', (event: any, arg: any) => {
+    ipcMain.on('log.error', (event, arg) => {
       log(arg);
     });
 

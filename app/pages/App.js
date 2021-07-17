@@ -1,4 +1,3 @@
-// @flow
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { ConnectedRouter } from 'connected-react-router';
@@ -13,13 +12,8 @@ const styles = theme => ({
   }
 });
 
-type Props = {
-  classes: Object,
-  history: {}
-};
-
-const App = (props: Props) => {
-  const { classes, history } = props;
+const App = props => {
+  const { classes, history } = props; // eslint-disable-line react/prop-types
   return (
     <Grid container className={classes.root}>
       <Grid item xs={12}>

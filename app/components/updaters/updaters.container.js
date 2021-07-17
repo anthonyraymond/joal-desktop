@@ -2,7 +2,7 @@ import { shell } from 'electron';
 import { connect } from 'react-redux';
 import Updaters from './updaters.component';
 
-function mapStateToProps(state: StateType) {
+function mapStateToProps(state) {
   return {
     updaters: state.updaters
   };
