@@ -52,103 +52,13 @@ jobs:
       - name: build
         run: yarn build
         
-  publish-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v2.2.0
-      
-      - name: Get yarn cache
-        id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-        
-      - name: Cache Node.js modules
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Cache Electron
-        uses: actions/cache@v1
-        with:
-          path: ${{ github.workspace }}/.cache/electron
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-
-      - name: Cache Electron-Builder
-        uses: actions/cache@v1
-        with:
-          path: ${{ github.workspace }}/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-electron-builder-cache-
-
-      - name: install deps
-        run: yarn
-        
-      - name: build & publish
-        run: |
-          yarn package-ci
-          yarn lint
-          yarn build-e2e
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v2.2.0
-      
-      - name: Get yarn cache
-        id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-        
-      - name: Cache Node.js modules
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Cache Electron
-        uses: actions/cache@v1
-        with:
-          path: ${{ github.workspace }}/.cache/electron
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-
-      - name: Cache Electron-Builder
-        uses: actions/cache@v1
-        with:
-          path: ${{ github.workspace }}/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-electron-builder-cache-
-
-      - name: install deps
-        run: yarn
-        
-      - name: build & publish
-        run: |
-          yarn package-ci
-          yarn lint
-          yarn build-e2e
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-  publish-mac:
-    runs-on: macos-latest
+  publish-electron:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') # run this step only when tagged
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
 
