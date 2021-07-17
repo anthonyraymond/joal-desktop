@@ -4,54 +4,165 @@ import path from 'path';
 import request from 'request';
 import fs from 'fs';
 import rimraf from 'rimraf';
-import zlib from 'zlib';
+import gunzipMaybe from 'gunzip-maybe';
 import tar from 'tar-fs';
 import PProgress from 'p-progress';
 import childProcess from 'child_process';
+import unzipper from 'unzipper';
 
 const ROOT_INSTALL_FOLDER = path.join(app.getPath('userData'), 'jre');
-const JRE_MAJOR_VERSION = '8';
-const JRE_UPDATE_NUMBER = '202';
-const JRE_BUILD_NUMBER = '1467.3';
-const JRE_VERSION = `${JRE_MAJOR_VERSION}u${JRE_UPDATE_NUMBER}`;
+const JRE_MAJOR_VERSION = '11';
+const JRE_MINOR_NUMBER = '0';
+const JRE_PATCH_NUMBER = '11';
+const JRE_BUILD_NUMBER = '9';
+const JAVA_VERSION_STRING = `${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}+${JRE_BUILD_NUMBER}`;
 
-const jetbrainsPlatformName = () => {
-  const systemPlatform = os.platform();
+const systemPlatform = os.platform();
+
+const download = (resolve, reject, progress) => {
+  let patformName = '';
+  let downloadedArchiveExtension = 'tar.gz';
   switch (systemPlatform) {
     case 'darwin':
-      return 'osx';
+      patformName = 'mac';
+      downloadedArchiveExtension = 'tar.gz';
+      break;
     case 'win32':
-      return 'windows';
+      patformName = 'windows';
+      downloadedArchiveExtension = 'zip';
+      break;
     case 'linux':
-      return 'linux';
+      patformName = 'linux';
+      downloadedArchiveExtension = 'tar.gz';
+      break;
     default:
       throw new Error(`unsupported platform: ${systemPlatform}`);
   }
+
+  const url = `https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}%2B${JRE_BUILD_NUMBER}/OpenJDK11U-jre_x64_${patformName}_hotspot_${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}_${JRE_BUILD_NUMBER}.${downloadedArchiveExtension}`;
+
+  let downloaded = 0;
+  let totalDownloadLength = 0;
+  let hundredthOfTotalDownloadlength = 0;
+  let downloadedSinceLastProgressReport = 0;
+
+  console.log(`download jre from: ${url}`);
+  return request(url)
+    .on('error', e => {
+      console.log('Failed to download JRE:', e);
+      cleanInstallFolder();
+      reject(e);
+    })
+    .on('response', res => {
+      if (res.statusCode !== 200) {
+        reject(`Failed to download JRE: status code is ${res.statusCode}`);
+      }
+      totalDownloadLength = parseInt(res.headers['content-length'], 10);
+      hundredthOfTotalDownloadlength = Math.floor(totalDownloadLength / 100);
+    })
+    .on('data', chunk => {
+      downloaded += chunk.length;
+      downloadedSinceLastProgressReport += chunk.length;
+      // Report at max 100 events per download
+      if (downloadedSinceLastProgressReport >= hundredthOfTotalDownloadlength) {
+        downloadedSinceLastProgressReport = 0;
+        progress(downloaded / totalDownloadLength);
+      }
+    })
+    .on('end', () => {
+      // Do not send the progress(1) it's automatically sent on resolve() call
+      console.log('Successfully downloaded jre archive');
+    });
 };
 
-// Full list at : https://jetbrains.bintray.com/intellij-jdk/ (be sure to search for "jbrex" as it also contains JDK)
-const url = () =>
-  `https://bintray.com/jetbrains/intellij-jdk/download_file?file_path=jbrex${JRE_VERSION}b${JRE_BUILD_NUMBER}_${jetbrainsPlatformName()}_x64.tar.gz`;
+const extract = (resolve, reject) => {
+  let extractorStream;
+  const pathInArchive = {
+    win: [],
+    mac: ['Contents', 'Home'],
+    linux: []
+  };
 
-export const getJreBinaryPath = () => {
-  const systemPlatform = os.platform();
-  let relativePath;
   switch (systemPlatform) {
     case 'darwin':
-      relativePath = ['jdk', 'Contents', 'Home', 'jre', 'bin', 'java'];
+      extractorStream = tar.extract(ROOT_INSTALL_FOLDER, {
+        ignore: (_, header) => {
+          let filepath = header.name.replace(/j.*?\//, '');
+          pathInArchive.mac.forEach(p => {
+            filepath = filepath.replace(new RegExp(`${p}/`, 'g'), '');
+          });
+
+          return filepath === '';
+        },
+        map: header => {
+          // trim the folder named after the jre version (jdk-11.0.11+9-jre or so)
+          let filepath = header.name.replace(/j.*?\//, '');
+          pathInArchive.mac.forEach(p => {
+            filepath = filepath.replace(new RegExp(`${p}/`, 'g'), '');
+          });
+
+          header.name = filepath; // eslint-disable-line no-param-reassign
+          return header;
+        }
+      });
       break;
     case 'win32':
-      relativePath = ['jre', 'bin', 'java.exe'];
+      extractorStream = unzipper.Parse().on('entry', entry => {
+        // trim the folder named after the jre version (jdk-11.0.11+9-jre or so)
+        let filepath = entry.path.replace(/j.*?\//, '');
+        pathInArchive.win.forEach(p => {
+          filepath = filepath.replace(new RegExp(`${p}/`, 'g'), '');
+        });
+
+        if (filepath === '') {
+          entry.autodrain();
+        } else if (entry.type === 'Directory') {
+          fs.mkdirSync(path.join(ROOT_INSTALL_FOLDER, filepath));
+        } else {
+          entry.pipe(
+            fs.createWriteStream(path.join(ROOT_INSTALL_FOLDER, filepath))
+          );
+        }
+      });
       break;
     case 'linux':
-      relativePath = ['jre', 'bin', 'java'];
+      extractorStream = tar.extract(ROOT_INSTALL_FOLDER, {
+        ignore: (_, header) => {
+          let filepath = header.name.replace(/j.*?\//, '');
+          pathInArchive.linux.forEach(p => {
+            filepath = filepath.replace(new RegExp(`${p}/`, 'g'), '');
+          });
+          return filepath === '';
+        },
+        map: header => {
+          // trim the folder named after the jre version (jdk-11.0.11+9-jre or so)
+          let filepath = header.name.replace(/j.*?\//, '');
+          pathInArchive.linux.forEach(p => {
+            filepath = filepath.replace(new RegExp(`${p}/`, 'g'), '');
+          });
+
+          header.name = filepath; // eslint-disable-line no-param-reassign
+          return header;
+        }
+      });
       break;
     default:
-      throw new Error(`unsupported platform for JRE: ${systemPlatform}`);
+      throw new Error(`unsupported platform: ${systemPlatform}`);
   }
 
-  return path.join(ROOT_INSTALL_FOLDER, ...relativePath);
+  return extractorStream
+    .on('error', e => {
+      console.log('Failed to extract jre', e);
+      cleanInstallFolder();
+      reject(e);
+    })
+    .on('end', () => {
+      console.log('Successfully extracted jre');
+    });
 };
+
+export const getJreBinaryPath = () =>
+  path.join(ROOT_INSTALL_FOLDER, 'bin', 'java');
 
 const isInstalledAndDoesNotRequiresUpdates = () => {
   const javaResponse = childProcess.spawnSync(
@@ -66,17 +177,14 @@ const isInstalledAndDoesNotRequiresUpdates = () => {
     return false;
   }
 
-  const versionMatch = new RegExp(
-    `\\w+ version "\\d\\.${JRE_MAJOR_VERSION}\\.\\d_${JRE_UPDATE_NUMBER}-\\w+"`
-  ).test(javaResponse.stderr);
-
-  if (!versionMatch) {
+  if (!javaResponse.stderr.includes(JAVA_VERSION_STRING)) {
     console.log(
-      `The output of java-version didn\t passed the regex version test. Expected version ${JRE_MAJOR_VERSION} ${JRE_UPDATE_NUMBER}, output of the command was:`,
+      `The output of java-version didn\t contains ${JAVA_VERSION_STRING}, output of the command was:`,
       javaResponse.stderr
     );
+    return false;
   }
-  return versionMatch;
+  return true;
 };
 
 const cleanInstallFolder = () => {
@@ -92,7 +200,7 @@ const install = () =>
       console.log('Jre is already installed and does not needs to update');
       resolve({
         wasUpToDate: true,
-        updateInfo: { version: JRE_VERSION }
+        updateInfo: { version: JAVA_VERSION_STRING }
       });
       return;
     }
@@ -104,63 +212,18 @@ const install = () =>
       reject(e);
     }
 
-    console.log(`Jre is not installed yet, pulling it from ${url()}`);
-    let downloaded = 0;
-    let totalDownloadLength = 0;
-    let hundredthOfTotalDownloadlength = 0;
-    let downloadedSinceLastProgressReport = 0;
-
-    request(url())
-      .on('error', e => {
-        console.log('Failed to download JRE:', e);
-        cleanInstallFolder();
-        reject(e);
-      })
-      .on('response', res => {
-        if (res.statusCode !== 200) {
-          reject(`Failed to download JRE: status code is ${res.statusCode}`);
-        }
-        totalDownloadLength = parseInt(res.headers['content-length'], 10);
-        hundredthOfTotalDownloadlength = Math.floor(totalDownloadLength / 100);
-      })
-      .on('data', chunk => {
-        downloaded += chunk.length;
-        downloadedSinceLastProgressReport += chunk.length;
-        // Report at max 100 events per download
-        if (
-          downloadedSinceLastProgressReport >= hundredthOfTotalDownloadlength
-        ) {
-          downloadedSinceLastProgressReport = 0;
-          progress(downloaded / totalDownloadLength);
-        }
-      })
-      .on('end', () => {
-        // Do not send the progress(1) it's automatically sent on resolve() call
-        console.log('Successfully downloaded jre archive');
-      })
-      .pipe(zlib.createGunzip())
-      .on('error', e => {
-        console.log('Failed to unzip jre', e);
-        cleanInstallFolder();
-        reject(e);
-      })
-      .on('end', () => {
-        console.log('Successfully unziped jre');
-      })
-      .pipe(tar.extract(ROOT_INSTALL_FOLDER))
-      .on('error', e => {
-        console.log("Failed to extract jre's tar", e);
-        cleanInstallFolder();
-        reject(e);
-      })
+    console.log(`Jre is not installed yet, going to install`);
+    fs.mkdirSync(ROOT_INSTALL_FOLDER);
+    download(resolve, reject, progress)
+      .pipe(gunzipMaybe())
+      .pipe(extract(resolve, reject))
       .on('finish', () => {
-        console.log("Successfully extracted jre's tar");
-
+        console.log('checking jre installation');
         try {
           if (isInstalledAndDoesNotRequiresUpdates()) {
             resolve({
               wasUpToDate: false,
-              updateInfo: { version: JRE_VERSION }
+              updateInfo: { version: JAVA_VERSION_STRING }
             });
           } else {
             cleanInstallFolder();
