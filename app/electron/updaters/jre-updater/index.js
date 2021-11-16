@@ -13,8 +13,8 @@ import unzipper from 'unzipper';
 const ROOT_INSTALL_FOLDER = path.join(app.getPath('userData'), 'jre');
 const JRE_MAJOR_VERSION = '11';
 const JRE_MINOR_NUMBER = '0';
-const JRE_PATCH_NUMBER = '11';
-const JRE_BUILD_NUMBER = '9';
+const JRE_PATCH_NUMBER = '13';
+const JRE_BUILD_NUMBER = '8';
 const JAVA_VERSION_STRING = `${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}+${JRE_BUILD_NUMBER}`;
 
 const systemPlatform = os.platform();
@@ -39,7 +39,7 @@ const download = (resolve, reject, progress) => {
       throw new Error(`unsupported platform: ${systemPlatform}`);
   }
 
-  const url = `https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}%2B${JRE_BUILD_NUMBER}/OpenJDK11U-jre_x64_${patformName}_hotspot_${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}_${JRE_BUILD_NUMBER}.${downloadedArchiveExtension}`;
+  const url = `https://github.com/adoptium/temurin11-binaries/releases/download/jdk-${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}%2B${JRE_BUILD_NUMBER}/OpenJDK11U-jre_x64_${patformName}_hotspot_${JRE_MAJOR_VERSION}.${JRE_MINOR_NUMBER}.${JRE_PATCH_NUMBER}_${JRE_BUILD_NUMBER}.${downloadedArchiveExtension}`;
 
   let downloaded = 0;
   let totalDownloadLength = 0;
