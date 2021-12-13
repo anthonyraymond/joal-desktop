@@ -14,4 +14,4 @@ cd - 1> /dev/null
 	--joal.ui.path.prefix="aaaaa" \
 	--joal.ui.secret-token="aaaaa"
 
-#destUrl='http://localhost:5081/aaaaa/ui/'
+#destUrl='http://127.0.0.1:5081/aaaaa/ui/'

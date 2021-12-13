@@ -12,7 +12,7 @@ const uuidv4 = () =>
   });
 
 const createJoalRancomWebUiConfig = () => ({
-  host: 'localhost',
+  host: '127.0.0.1',
   port: 5081,
   pathPrefix: uuidv4(),
   secretToken: uuidv4()
@@ -42,7 +42,7 @@ export default class Joal {
         `--server.port=${this.currentConfig.port}`,
         `--joal.ui.path.prefix=${this.currentConfig.pathPrefix}`,
         `--joal.ui.secret-token=${this.currentConfig.secretToken}`,
-        '--server.address=localhost'
+        '--server.address=127.0.0.1'
       ],
       { encoding: 'utf8', detached: shouldRunDetached }
     );
