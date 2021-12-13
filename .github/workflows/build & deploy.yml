@@ -25,21 +25,21 @@ jobs:
 
       - name: Get cache
         id: cache
-        run: echo "::set-output name=dir::$(npm config get cache)"
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
       - name: Cache Node.js modules
         uses: actions/cache@v1
         with:
           path: ${{ steps.cache.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
-            ${{ runner.os }}-npm-
+            ${{ runner.os }}-yarn-
 
       - name: Cache Electron
         uses: actions/cache@v1
         with:
           path: ${{ github.workspace }}/.cache/electron
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
             ${{ runner.os }}-electron-cache-
 
@@ -47,15 +47,15 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ github.workspace }}/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
             ${{ runner.os }}-electron-builder-cache-
 
       - name: install deps
-        run: npm install
+        run: yarn
 
       - name: build
-        run: npm build
+        run: yarn build
 
   publish-electron:
     needs: build
@@ -74,21 +74,21 @@ jobs:
 
       - name: Get cache
         id: cache
-        run: echo "::set-output name=dir::$(npm config get cache)"
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
       - name: Cache Node.js modules
         uses: actions/cache@v1
         with:
           path: ${{ steps.cache.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
-            ${{ runner.os }}-npm-
+            ${{ runner.os }}-yarn-
 
       - name: Cache Electron
         uses: actions/cache@v1
         with:
           path: ${{ github.workspace }}/.cache/electron
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
             ${{ runner.os }}-electron-cache-
 
@@ -96,17 +96,17 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ github.workspace }}/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/package-lock.json')) }}
+          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
           restore-keys: |
             ${{ runner.os }}-electron-builder-cache-
 
       - name: install deps
-        run: npm install
+        run: yarn
 
       - name: build & publish
         run: |
-          npm package-ci
-          npm lint
-          npm build-e2e
+          yarn package-ci
+          yarn lint
+          yarn build-e2e
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
