@@ -44,7 +44,7 @@ jobs:
         run: npm install
 
       - name: build
-        run: npm build
+        run: npm run-script build
 
   publish-electron:
     needs: build
@@ -83,8 +83,8 @@ jobs:
 
       - name: build & publish
         run: |
-          npm package-ci
-          npm lint
-          npm build-e2e
+          npm run-script package-ci
+          npm run-script lint
+          npm run-script build-e2e
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
