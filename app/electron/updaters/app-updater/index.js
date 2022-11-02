@@ -1,4 +1,7 @@
 import PProgress from 'p-progress';
+import path from 'path';
+import fs from 'fs';
+import rimraf from 'rimraf';
 import os from 'os';
 import { autoUpdater as electronUpdater } from 'electron-updater';
 import isDev from 'electron-is-dev';
@@ -11,7 +14,19 @@ const checkAndInstallUpdate = () =>
         updateInfo
       })
     );
-    electronUpdater.on('update-available', () => /* updateInfo */ progress(0));
+    electronUpdater.on('update-available', () => {
+      // workaround for https://github.com/electron-userland/electron-builder/issues/6269
+      const pendingCacheDir = path.join(
+        electronUpdater.app.baseCachePath,
+        electronUpdater.app.name,
+        'pending'
+      );
+      if (fs.existsSync(pendingCacheDir)) {
+        rimraf.sync(pendingCacheDir);
+      }
+
+      progress(0);
+    });
     electronUpdater.on('download-progress', progressInfo =>
       progress(progressInfo.progress)
     );
