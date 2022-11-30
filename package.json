@@ -1,7 +1,7 @@
 {
   "name": "joal-desktop",
   "productName": "JoalDesktop",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "description": "A tool to fake your torrent tracker upload",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
