@@ -18,12 +18,13 @@ const checkAndInstallUpdate = () =>
       // workaround for https://github.com/electron-userland/electron-builder/issues/6269
       const pendingCacheDir = path.join(
         electronUpdater.app.baseCachePath,
-        electronUpdater.app.name,
+        'joal-desktop-updater',
         'pending'
       );
       if (fs.existsSync(pendingCacheDir)) {
         rimraf.sync(pendingCacheDir);
       }
+      console.log(pendingCacheDir);
 
       progress(0);
     });
