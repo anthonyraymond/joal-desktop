@@ -5,7 +5,6 @@ import {
   dialog
 } from 'electron';
 import waitOn from 'wait-on';
-import StateManager from './StateManager';
 import MenuBuilder from './MenuBuilder';
 import DependencyUpdater from './updaters/DependencyUpdater';
 import Joal from './runner/Joal';
@@ -18,8 +17,6 @@ export default class WindowManager {
   dependencyUpdater = new DependencyUpdater();
 
   isUpdateInProgress = false;
-
-  stateManager = new StateManager();
 
   joal = new Joal();
 
@@ -50,8 +47,6 @@ export default class WindowManager {
   registerWindowEventHandlers(window, descriptor) {
     window.on('close', e => {
       WindowManager.saveWindowState(window, descriptor);
-
-      this.stateManager.save();
 
       if (this.isUpdateInProgress) {
         const pressedButton = dialog.showMessageBox(window, {
@@ -97,9 +92,7 @@ export default class WindowManager {
       const uiConfig = this.joal.start();
       const configAsUrlParam = encodeURIComponent(JSON.stringify(uiConfig));
 
-      const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${
-        uiConfig.pathPrefix
-      }/ui?ui_credentials=${configAsUrlParam}`;
+      const uiUrl = `http://${uiConfig.host}:${uiConfig.port}/${uiConfig.pathPrefix}/ui?ui_credentials=${configAsUrlParam}`;
       waitOn(
         {
           resources: [uiUrl],
@@ -123,11 +116,10 @@ export default class WindowManager {
   }
 
   openWindow() {
-    let descriptor = this.stateManager.getWindow();
-    if (descriptor === null || descriptor === undefined) {
-      this.stateManager.restoreWindow();
-      descriptor = this.stateManager.getWindow();
-    }
+    const descriptor = {
+      width: 1024,
+      height: 728
+    };
 
     const options = {
       // to avoid visible maximizing
